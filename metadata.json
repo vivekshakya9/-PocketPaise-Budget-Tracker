@@ -1,0 +1,6 @@
+{
+  "name": "PocketPaise",
+  "description": "Student Budget Tracker (India) – Track pocket money, daily expenses, monthly budget, savings, and personal finances.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "485434996438",
+    "project_id": "pocketpaise-b7c71",
+    "storage_bucket": "pocketpaise-b7c71.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:485434996438:android:f3b75ebd47590c0b30bb77",
+        "android_client_info": {
+          "package_name": "com.vsdigitallabs.pocketpaise.stdbt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC0xbig8NGMde7TtzDVdaO0HCmbCI_FMow"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
