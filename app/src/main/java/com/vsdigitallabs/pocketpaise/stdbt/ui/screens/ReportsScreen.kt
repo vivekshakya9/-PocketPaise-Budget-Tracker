@@ -400,7 +400,7 @@ fun ReportsScreen(navController: NavController, viewModel: PocketPaiseViewModel)
                             modifier = Modifier.padding(bottom = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.MultilineChart, contentDescription = "Trends", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+                            Icon(Icons.Default.MultilineChart, contentDescription = "Trend Line Chart", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
                                 text = "Spending Progression Trend",

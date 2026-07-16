@@ -385,7 +385,7 @@ fun ProfileScreen(navController: NavController, viewModel: PocketPaiseViewModel)
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Logout", modifier = Modifier.size(16.dp))
+                            Icon(Icons.Default.Logout, contentDescription = "Logout", modifier = Modifier.size(16.dp))
                             Spacer(modifier = Modifier.width(6.dp))
                             Text("Logout Securely")
                         }
@@ -700,7 +700,7 @@ fun SettingsScreen(navController: NavController, viewModel: PocketPaiseViewModel
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.AutoMirrored.Filled.Rule, contentDescription = "Terms", tint = MaterialTheme.colorScheme.primary)
+                            Icon(Icons.Default.Rule, contentDescription = "Terms", tint = MaterialTheme.colorScheme.primary)
                             Spacer(modifier = Modifier.width(12.dp))
                             Text(text = "Terms & Conditions", fontSize = 14.sp)
                         }
