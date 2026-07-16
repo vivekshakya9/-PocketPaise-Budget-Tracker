@@ -222,7 +222,7 @@ fun BudgetRowItem(
                                 "Medical" -> Icons.Default.LocalHospital
                                 "Entertainment" -> Icons.Default.LocalPlay
                                 "Rent" -> Icons.Default.Home
-                                else -> Icons.Default.ReceiptLong
+                                else -> Icons.AutoMirrored.Filled.ReceiptLong
                             },
                             contentDescription = budget.category,
                             tint = when {

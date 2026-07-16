@@ -239,7 +239,7 @@ fun CalendarScreen(navController: NavController, viewModel: PocketPaiseViewModel
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(
-                            imageVector = Icons.Default.EventNote,
+                            imageVector = Icons.AutoMirrored.Filled.EventNote,
                             contentDescription = "Empty Date",
                             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
                             modifier = Modifier.size(40.dp)

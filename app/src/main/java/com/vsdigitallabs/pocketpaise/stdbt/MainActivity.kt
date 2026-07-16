@@ -83,7 +83,7 @@ class MainActivity : ComponentActivity() {
                                             restoreState = true
                                         }
                                     },
-                                    icon = { Icon(Icons.Default.ReceiptLong, contentDescription = "Transactions") },
+                                    icon = { Icon(Icons.AutoMirrored.Filled.ReceiptLong, contentDescription = "Transactions") },
                                     label = { Text("Transactions") },
                                     alwaysShowLabel = false,
                                     modifier = Modifier.testTag("nav_transactions")

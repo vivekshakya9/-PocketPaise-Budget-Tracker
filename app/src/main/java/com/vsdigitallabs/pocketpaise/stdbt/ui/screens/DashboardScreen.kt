@@ -673,7 +673,7 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
-                            imageVector = Icons.Default.ReceiptLong,
+                            imageVector = Icons.AutoMirrored.Filled.ReceiptLong,
                             contentDescription = "No transactions",
                             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f),
                             modifier = Modifier.size(40.dp)

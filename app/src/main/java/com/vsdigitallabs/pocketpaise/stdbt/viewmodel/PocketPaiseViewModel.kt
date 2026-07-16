@@ -8,10 +8,12 @@ import androidx.lifecycle.viewModelScope
 import com.vsdigitallabs.pocketpaise.stdbt.data.local.AppDatabase
 import com.vsdigitallabs.pocketpaise.stdbt.data.model.*
 import com.vsdigitallabs.pocketpaise.stdbt.data.repository.PocketPaiseRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class PocketPaiseViewModel(
     application: Application,
     private val repository: PocketPaiseRepository
