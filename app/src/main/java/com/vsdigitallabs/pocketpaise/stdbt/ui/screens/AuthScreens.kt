@@ -38,6 +38,7 @@ import com.vsdigitallabs.pocketpaise.stdbt.viewmodel.PocketPaiseViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.credentials.CredentialManager
 import androidx.credentials.GetCredentialRequest
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
@@ -264,11 +265,11 @@ fun LoginScreen(navController: NavController, viewModel: PocketPaiseViewModel) {
             ) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { rememberMe = !rememberMe }
+                    modifier = Modifier.clickable { rememberLogin = !rememberLogin }
                 ) {
                     Checkbox(
-                        checked = rememberMe,
-                        onCheckedChange = { rememberMe = it }
+                        checked = rememberLogin,
+                        onCheckedChange = { rememberLogin = it }
                     )
                     Text(
                         text = "Remember Login",
