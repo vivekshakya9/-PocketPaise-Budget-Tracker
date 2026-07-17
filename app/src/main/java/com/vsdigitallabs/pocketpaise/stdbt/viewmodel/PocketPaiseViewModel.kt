@@ -418,6 +418,63 @@ class PocketPaiseViewModel(
         }
     }
 
+    fun loginWithGoogle(email: String, name: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val response = com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.googleAuth(
+                    mapOf("email" to email, "name" to name)
+                )
+
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val token = response.body()?.data?.token
+                    val serverUserId = response.body()?.data?.user_id?.toLong() ?: 0L
+                    
+                    com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.authToken = token
+                    
+                    val user = User(
+                        id = serverUserId,
+                        name = name,
+                        email = email,
+                        mobileNumber = "",
+                        collegeName = "",
+                        city = "",
+                        passwordHash = "",
+                        pocketMoneyLimit = 0.0,
+                        currentSavings = 0.0
+                    )
+                    
+                    val existing = repository.getUserByEmail(email)
+                    if (existing == null) {
+                        repository.insertUser(user)
+                    } else {
+                        repository.updateUser(user.copy(id = existing.id))
+                    }
+                    
+                    _currentUserId.value = existing?.id ?: serverUserId
+                    onSuccess()
+                } else {
+                    val errorString = response.errorBody()?.string()
+                    val errorMessage = if (errorString != null) {
+                        try {
+                            org.json.JSONObject(errorString).getString("message")
+                        } catch (e: Exception) {
+                            "Google login failed."
+                        }
+                    } else {
+                        "Google login failed."
+                    }
+                    onError(errorMessage)
+                }
+            } catch (e: java.net.UnknownHostException) {
+                onError("No internet connection. Please check your network and try again.")
+            } catch (e: java.net.SocketTimeoutException) {
+                onError("Connection timed out. Please try again.")
+            } catch (e: Exception) {
+                onError(e.localizedMessage ?: "Google login failed")
+            }
+        }
+    }
+
     fun logout(onComplete: () -> Unit) {
         _currentUserId.value = null
         onComplete()

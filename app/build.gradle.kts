@@ -102,6 +102,12 @@ dependencies {
   // implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
   implementation(libs.firebase.ai)
+  
+  // Google Sign In (Credential Manager)
+  implementation("androidx.credentials:credentials:1.3.0-rc01")
+  implementation("androidx.credentials:credentials-play-services-auth:1.3.0-rc01")
+  implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
+  
   // Uncomment to use Firestore:
   // implementation(libs.firebase.firestore)
 

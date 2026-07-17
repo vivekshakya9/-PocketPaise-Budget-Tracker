@@ -21,6 +21,9 @@ data class AuthResponse(
 interface ApiService {
     @POST("auth.php?action=login")
     suspend fun login(@Body body: Map<String, String>): Response<ApiResponse<AuthResponse>>
+    
+    @POST("auth.php?action=google_auth")
+    suspend fun googleAuth(@Body body: Map<String, String>): Response<ApiResponse<AuthResponse>>
 
     @POST("auth.php?action=register")
     suspend fun register(@Body body: Map<String, String>): Response<ApiResponse<AuthResponse>>

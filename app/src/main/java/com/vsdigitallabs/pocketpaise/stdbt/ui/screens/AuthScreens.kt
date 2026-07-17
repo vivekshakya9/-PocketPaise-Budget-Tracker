@@ -36,6 +36,12 @@ import com.vsdigitallabs.pocketpaise.stdbt.ui.theme.EmeraldPrimaryDark
 import com.vsdigitallabs.pocketpaise.stdbt.ui.theme.MarigoldTertiary
 import com.vsdigitallabs.pocketpaise.stdbt.viewmodel.PocketPaiseViewModel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import androidx.compose.ui.platform.LocalContext
+import androidx.credentials.CredentialManager
+import androidx.credentials.GetCredentialRequest
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
+import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 
 @Composable
 fun SplashScreen(navController: NavController, viewModel: PocketPaiseViewModel) {
@@ -128,6 +134,8 @@ fun LoginScreen(navController: NavController, viewModel: PocketPaiseViewModel) {
     var errorMessage by remember { mutableStateOf<String?>(null) }
     
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     Box(
         modifier = Modifier
@@ -311,18 +319,46 @@ fun LoginScreen(navController: NavController, viewModel: PocketPaiseViewModel) {
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Google Sign-In Simulation Button
+            // Google Sign-In Button
             OutlinedButton(
                 onClick = {
-                    viewModel.googleSignIn(
-                        email = "google_student@pocketpaise.in",
-                        name = "Google Student Student",
-                        onSuccess = {
-                            navController.navigate(Screen.Dashboard.route) {
-                                popUpTo(Screen.Login.route) { inclusive = true }
+                    val credentialManager = CredentialManager.create(context)
+                    val googleIdOption = GetGoogleIdOption.Builder()
+                        .setFilterByAuthorizedAccounts(false)
+                        .setServerClientId("485434996438-742ic1b31dhiqf5mn34el80jdqvng70t.apps.googleusercontent.com")
+                        .setAutoSelectEnabled(false)
+                        .build()
+                        
+                    val request = GetCredentialRequest.Builder()
+                        .addCredentialOption(googleIdOption)
+                        .build()
+                        
+                    coroutineScope.launch {
+                        try {
+                            val result = credentialManager.getCredential(
+                                request = request,
+                                context = context
+                            )
+                            val credential = result.credential
+                            if (credential is androidx.credentials.CustomCredential &&
+                                credential.type == GoogleIdTokenCredential.TYPE_GOOGLE_ID_TOKEN_CREDENTIAL) {
+                                val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
+                                
+                                viewModel.loginWithGoogle(
+                                    email = googleIdTokenCredential.id,
+                                    name = googleIdTokenCredential.displayName ?: "Student",
+                                    onSuccess = {
+                                        navController.navigate(Screen.Dashboard.route) {
+                                            popUpTo(Screen.Login.route) { inclusive = true }
+                                        }
+                                    },
+                                    onError = { error -> errorMessage = error }
+                                )
                             }
+                        } catch (e: Exception) {
+                            errorMessage = e.localizedMessage ?: "Google Sign-In Canceled or Failed"
                         }
-                    )
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()

@@ -12,7 +12,20 @@
           "package_name": "com.vsdigitallabs.pocketpaise.stdbt"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "485434996438-u2b6tcudk29673qho36sjur4btric2am.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vsdigitallabs.pocketpaise.stdbt",
+            "certificate_hash": "41b587864e836c6ee6b7e0a7373d90a448ad03d2"
+          }
+        },
+        {
+          "client_id": "485434996438-742ic1b31dhiqf5mn34el80jdqvng70t.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyC0xbig8NGMde7TtzDVdaO0HCmbCI_FMow"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "485434996438-742ic1b31dhiqf5mn34el80jdqvng70t.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }
