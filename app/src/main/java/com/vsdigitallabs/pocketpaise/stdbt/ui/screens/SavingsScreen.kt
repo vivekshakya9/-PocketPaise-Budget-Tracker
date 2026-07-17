@@ -150,8 +150,9 @@ fun SavingsScreen(navController: NavController, viewModel: PocketPaiseViewModel)
         if (showAddGoalDialog) {
             AddSavingsGoalDialog(
                 onDismiss = { showAddGoalDialog = false },
-                onConfirm = { name, target, days ->
-                    viewModel.addSavingsGoal(name, target, days)
+                onConfirm = { name, amount, days ->
+                    val targetDate = System.currentTimeMillis() + (86400000L * days)
+                    viewModel.addGoal(name, amount, targetDate)
                     showAddGoalDialog = false
                 }
             )

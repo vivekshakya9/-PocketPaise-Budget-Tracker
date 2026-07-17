@@ -9,6 +9,9 @@ interface SavingsGoalDao {
     @Query("SELECT * FROM savings_goals WHERE userId = :userId ORDER BY targetDate ASC")
     fun getSavingsGoals(userId: Long): Flow<List<SavingsGoal>>
 
+    @Query("SELECT * FROM savings_goals WHERE id = :id LIMIT 1")
+    suspend fun getGoalByIdSync(id: Long): SavingsGoal?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertGoal(goal: SavingsGoal): Long
     

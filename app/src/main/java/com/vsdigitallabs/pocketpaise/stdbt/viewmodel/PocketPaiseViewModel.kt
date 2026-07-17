@@ -663,7 +663,7 @@ class PocketPaiseViewModel(
 
     fun deleteBudget(id: Long) {
         viewModelScope.launch {
-            val budget = repository.getAllBudgets(_currentUserId.value ?: 0).firstOrNull()?.find { it.id == id }
+            val budget = repository.getBudgetByIdSync(id)
             try {
                 if (budget != null && budget.serverId > 0) {
                     com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteBudget(budget.serverId)
@@ -671,7 +671,7 @@ class PocketPaiseViewModel(
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-            repository.deleteBudget(id)
+            repository.deleteBudgetById(id)
         }
     }
 
@@ -752,7 +752,7 @@ class PocketPaiseViewModel(
 
     fun deleteGoal(id: Long) {
         viewModelScope.launch {
-            val goal = repository.getAllGoals(_currentUserId.value ?: 0).firstOrNull()?.find { it.id == id }
+            val goal = repository.getGoalByIdSync(id)
             try {
                 if (goal != null && goal.serverId > 0) {
                     com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteGoal(goal.serverId)
@@ -760,7 +760,7 @@ class PocketPaiseViewModel(
             } catch (e: Exception) {
                 e.printStackTrace()
             }
-            repository.deleteGoal(id)
+            repository.deleteGoalById(id)
         }
     }
 
