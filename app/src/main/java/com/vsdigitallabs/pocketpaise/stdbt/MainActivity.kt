@@ -26,7 +26,13 @@ import com.vsdigitallabs.pocketpaise.stdbt.ui.screens.*
 import com.vsdigitallabs.pocketpaise.stdbt.ui.theme.PocketPaiseTheme
 import com.vsdigitallabs.pocketpaise.stdbt.viewmodel.PocketPaiseViewModel
 import com.vsdigitallabs.pocketpaise.stdbt.viewmodel.PocketPaiseViewModelFactory
+import android.Manifest
+import android.os.Build
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 
+@OptIn(ExperimentalPermissionsApi::class)
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,6 +48,17 @@ class MainActivity : ComponentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val currentRoute = navBackStackEntry?.destination?.route
 
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    val notificationPermissionState = rememberPermissionState(
+                        Manifest.permission.POST_NOTIFICATIONS
+                    )
+                    LaunchedEffect(Unit) {
+                        if (!notificationPermissionState.status.isGranted) {
+                            notificationPermissionState.launchPermissionRequest()
+                        }
+                    }
+                }
+
                 // Bottom bar visibility control
                 val showBottomBar = currentRoute in listOf(
                     Screen.Dashboard.route,
@@ -52,7 +69,7 @@ class MainActivity : ComponentActivity() {
                 )
 
                 Scaffold(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier.fillMaxSize().safeDrawingPadding(),
                     bottomBar = {
                         if (showBottomBar) {
                             NavigationBar(
