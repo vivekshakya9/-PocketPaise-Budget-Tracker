@@ -13,5 +13,7 @@ data class Transaction(
     val category: String, // Food, Travel, Recharge, etc.
     val timestamp: Long,
     val notes: String = "",
-    val receiptUri: String? = null
+    val receiptUri: String? = null,
+    val serverId: Long = 0L,
+    val isSynced: Boolean = false
 )

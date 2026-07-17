@@ -12,6 +12,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.Calendar
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.NetworkType
+import androidx.work.Constraints
+import com.vsdigitallabs.pocketpaise.stdbt.worker.SyncWorker
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PocketPaiseViewModel(
@@ -326,7 +331,7 @@ class PocketPaiseViewModel(
                     }
                     
                     _currentUserId.value = existing?.id ?: serverUserId
-                    onSuccess()
+                    fetchAndSyncData(serverUserId, onSuccess, onError)
                 } else {
                     val errorString = response.errorBody()?.string()
                     val errorMessage = if (errorString != null) {
@@ -451,7 +456,7 @@ class PocketPaiseViewModel(
                     }
                     
                     _currentUserId.value = existing?.id ?: serverUserId
-                    onSuccess()
+                    fetchAndSyncData(serverUserId, onSuccess, onError)
                 } else {
                     val errorString = response.errorBody()?.string()
                     val errorMessage = if (errorString != null) {
@@ -475,6 +480,65 @@ class PocketPaiseViewModel(
         }
     }
 
+    private fun fetchAndSyncData(userId: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val syncRes = com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.getSyncData()
+                if (syncRes.isSuccessful && syncRes.body()?.success == true) {
+                    val data = syncRes.body()?.data
+                    if (data != null) {
+                        val transactions = data.transactions.map { it.copy(userId = userId, isSynced = true) }
+                        val budgets = data.budgets.map { it.copy(userId = userId, isSynced = true) }
+                        val goals = data.goals.map { it.copy(userId = userId, isSynced = true) }
+                        repository.syncData(userId, transactions, budgets, goals)
+                        
+                        // Calculate total balances correctly after sync
+                        val balance = transactions.fold(0.0) { acc, tx ->
+                            if (tx.type == "INCOME") acc + tx.amount else acc - tx.amount
+                        }
+                        val user = repository.getUserByIdSync(userId)
+                        if (user != null) {
+                            repository.updateUser(user.copy(pocketMoneyLimit = balance))
+                        }
+                    }
+                }
+                onSuccess()
+            } catch (e: Exception) {
+                // If sync fails, still let user log in, but show toast or message if possible
+                onSuccess()
+            }
+        }
+    }
+
+    private fun fetchAndSyncData(userId: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val syncRes = com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.getSyncData()
+                if (syncRes.isSuccessful && syncRes.body()?.success == true) {
+                    val data = syncRes.body()?.data
+                    if (data != null) {
+                        val transactions = data.transactions.map { it.copy(userId = userId, isSynced = true) }
+                        val budgets = data.budgets.map { it.copy(userId = userId, isSynced = true) }
+                        val goals = data.goals.map { it.copy(userId = userId, isSynced = true) }
+                        repository.syncData(userId, transactions, budgets, goals)
+                        
+                        val balance = transactions.fold(0.0) { acc, tx ->
+                            if (tx.type == "INCOME") acc + tx.amount else acc - tx.amount
+                        }
+                        val user = repository.getUserByIdSync(userId)
+                        if (user != null) {
+                            repository.updateUser(user.copy(pocketMoneyLimit = balance))
+                        }
+                    }
+                }
+                onSuccess()
+            } catch (e: Exception) {
+                // Ignore sync failures so user still logs in if offline
+                onSuccess()
+            }
+        }
+    }
+
     fun logout(onComplete: () -> Unit) {
         _currentUserId.value = null
         onComplete()
@@ -494,7 +558,7 @@ class PocketPaiseViewModel(
     }
 
     // --- Transactions Actions ---
-    fun addTransaction(title: String, amount: Double, type: String, category: String, notes: String, receiptUri: String? = null) {
+    fun addTransaction(title: String, amount: Double, type: String, category: String, notes: String, receiptUri: String?) {
         viewModelScope.launch {
             val userId = _currentUserId.value ?: return@launch
             val tx = Transaction(
@@ -505,9 +569,11 @@ class PocketPaiseViewModel(
                 category = category,
                 timestamp = System.currentTimeMillis(),
                 notes = notes,
-                receiptUri = receiptUri
+                receiptUri = receiptUri,
+                isSynced = false
             )
             repository.insertTransaction(tx)
+            enqueueSyncWorker()
         }
     }
 
@@ -536,16 +602,18 @@ class PocketPaiseViewModel(
     }
 
     // --- Budget Actions ---
-    fun addBudget(category: String, limit: Double) {
+    fun addBudget(category: String, limitAmount: Double, monthYear: String) {
         viewModelScope.launch {
             val userId = _currentUserId.value ?: return@launch
-            val my = _currentMonthYear.value
-            val existing = currentBudgets.value.firstOrNull { it.category == category }
-            if (existing != null) {
-                repository.updateBudget(existing.copy(limitAmount = limit))
-            } else {
-                repository.insertBudget(Budget(userId = userId, category = category, limitAmount = limit, monthYear = my))
-            }
+            val budget = Budget(
+                userId = userId,
+                category = category,
+                limitAmount = limitAmount,
+                monthYear = monthYear,
+                isSynced = false
+            )
+            repository.insertBudget(budget)
+            enqueueSyncWorker()
         }
     }
 
@@ -640,6 +708,16 @@ class PocketPaiseViewModel(
             val userId = _currentUserId.value ?: return@launch
             repository.clearAllNotifications(userId)
         }
+    }
+
+    private fun enqueueSyncWorker() {
+        val constraints = Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.CONNECTED)
+            .build()
+        val syncWorkRequest = OneTimeWorkRequestBuilder<SyncWorker>()
+            .setConstraints(constraints)
+            .build()
+        WorkManager.getInstance(getApplication()).enqueue(syncWorkRequest)
     }
 
     // Settings adjustments

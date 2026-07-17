@@ -20,6 +20,18 @@ class PocketPaiseRepository(
     suspend fun insertUser(user: User): Long = userDao.insertUser(user)
     suspend fun updateUser(user: User) = userDao.updateUser(user)
 
+    // Sync functions
+    suspend fun syncData(userId: Long, transactions: List<Transaction>, budgets: List<Budget>, goals: List<SavingsGoal>) {
+        transactionDao.deleteAllForUser(userId)
+        transactionDao.insertAll(transactions)
+        
+        budgetDao.deleteAllForUser(userId)
+        budgetDao.insertAll(budgets)
+        
+        savingsGoalDao.deleteAllForUser(userId)
+        savingsGoalDao.insertAll(goals)
+    }
+
     // Transactions with Balance Adjustment and Auto Budget Alert Notification!
     fun getAllTransactions(userId: Long): Flow<List<Transaction>> = transactionDao.getAllTransactions(userId)
     fun getTransactionsByType(userId: Long, type: String): Flow<List<Transaction>> = transactionDao.getTransactionsByType(userId, type)

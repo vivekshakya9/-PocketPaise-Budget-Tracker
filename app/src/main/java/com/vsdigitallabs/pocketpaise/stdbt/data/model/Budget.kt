@@ -9,5 +9,7 @@ data class Budget(
     val userId: Long,
     val category: String, // Can be "GLOBAL" or specific category
     val limitAmount: Double,
-    val monthYear: String // MM-YYYY format
+    val monthYear: String, // MM-YYYY format
+    val serverId: Long = 0L,
+    val isSynced: Boolean = false
 )

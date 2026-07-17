@@ -11,5 +11,7 @@ data class SavingsGoal(
     val targetAmount: Double,
     val currentAmount: Double,
     val targetDate: Long,
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false,
+    val serverId: Long = 0L,
+    val isSynced: Boolean = false
 )

@@ -27,6 +27,13 @@ interface ApiService {
 
     @POST("auth.php?action=register")
     suspend fun register(@Body body: Map<String, String>): Response<ApiResponse<AuthResponse>>
+    
+    // Sync
+    @GET("sync.php")
+    suspend fun getSyncData(): Response<ApiResponse<com.vsdigitallabs.pocketpaise.stdbt.data.model.SyncData>>
+    
+    @POST("sync.php")
+    suspend fun pushSyncData(@Body body: com.vsdigitallabs.pocketpaise.stdbt.data.model.SyncData): Response<ApiResponse<Any>>
 
     // Expenses
     @GET("expenses.php")

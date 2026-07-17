@@ -23,6 +23,18 @@ interface TransactionDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertTransaction(transaction: Transaction): Long
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(transactions: List<Transaction>)
+
+    @Query("DELETE FROM transactions WHERE userId = :userId")
+    suspend fun deleteAllForUser(userId: Long)
+
+    @Query("SELECT * FROM transactions WHERE isSynced = 0")
+    suspend fun getUnsyncedTransactions(): List<Transaction>
+
+    @Query("UPDATE transactions SET isSynced = 1 WHERE isSynced = 0")
+    suspend fun markAllAsSynced()
 
     @Update
     suspend fun updateTransaction(transaction: Transaction)

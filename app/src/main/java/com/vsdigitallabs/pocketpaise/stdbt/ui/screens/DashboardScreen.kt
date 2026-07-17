@@ -86,7 +86,6 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.background)
-                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
                     .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
                 Row(

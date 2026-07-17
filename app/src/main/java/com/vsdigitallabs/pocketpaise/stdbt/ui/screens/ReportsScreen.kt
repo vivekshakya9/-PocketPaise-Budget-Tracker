@@ -24,9 +24,11 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -34,6 +36,7 @@ import com.vsdigitallabs.pocketpaise.stdbt.data.model.Transaction
 import com.vsdigitallabs.pocketpaise.stdbt.ui.theme.ExpenseRed
 import com.vsdigitallabs.pocketpaise.stdbt.ui.theme.MarigoldTertiary
 import com.vsdigitallabs.pocketpaise.stdbt.ui.theme.RupeeGreen
+import com.vsdigitallabs.pocketpaise.stdbt.utils.ExportUtil
 import com.vsdigitallabs.pocketpaise.stdbt.viewmodel.PocketPaiseViewModel
 import java.util.*
 
@@ -42,6 +45,7 @@ import java.util.*
 fun ReportsScreen(navController: NavController, viewModel: PocketPaiseViewModel) {
     val transactions by viewModel.allTransactions.collectAsState()
     val currencySymbol by viewModel.selectedCurrency.collectAsState()
+    val context = LocalContext.current
 
     var selectedReportTab by remember { mutableStateOf("Monthly") } // "Daily", "Weekly", "Monthly", "Yearly"
     val scrollState = rememberScrollState()
@@ -80,10 +84,22 @@ fun ReportsScreen(navController: NavController, viewModel: PocketPaiseViewModel)
             TopAppBar(
                 title = { 
                     Text(
-                        text = "Pocket Paise Reports", 
+                        text = "Reports", 
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimary
                     ) 
+                },
+                actions = {
+                    IconButton(onClick = { 
+                        ExportUtil.exportToPdf(context, filteredTxs, totalIncome, totalExpense)
+                    }) {
+                        Icon(Icons.Default.PictureAsPdf, contentDescription = "Export PDF", tint = MaterialTheme.colorScheme.onPrimary)
+                    }
+                    IconButton(onClick = { 
+                        ExportUtil.exportToCsv(context, filteredTxs)
+                    }) {
+                        Icon(Icons.Default.TableView, contentDescription = "Export CSV", tint = MaterialTheme.colorScheme.onPrimary)
+                    }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary

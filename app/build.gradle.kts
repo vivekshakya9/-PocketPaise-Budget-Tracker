@@ -102,6 +102,7 @@ dependencies {
   // implementation(libs.coil.compose)
   implementation(libs.converter.moshi)
   implementation(libs.firebase.ai)
+  implementation("androidx.work:work-runtime-ktx:2.9.0")
   
   // Google Sign In (Credential Manager)
   implementation("androidx.credentials:credentials:1.3.0-rc01")

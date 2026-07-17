@@ -14,7 +14,7 @@ import com.vsdigitallabs.pocketpaise.stdbt.data.model.*
         SavingsGoal::class,
         Notification::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {

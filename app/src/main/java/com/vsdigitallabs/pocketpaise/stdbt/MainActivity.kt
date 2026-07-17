@@ -72,8 +72,8 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                     icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                                    label = { Text("Home", maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 10.sp) },
-                                    alwaysShowLabel = false,
+                                    label = { Text("Home", maxLines = 1, softWrap = false, fontSize = 9.sp) },
+                                    alwaysShowLabel = true,
                                     modifier = Modifier.testTag("nav_home")
                                 )
 
@@ -87,8 +87,8 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                     icon = { Icon(Icons.Default.ReceiptLong, contentDescription = "Transactions") },
-                                    label = { Text("Transactions", maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 10.sp) },
-                                    alwaysShowLabel = false,
+                                    label = { Text("Transactions", maxLines = 1, softWrap = false, fontSize = 9.sp) },
+                                    alwaysShowLabel = true,
                                     modifier = Modifier.testTag("nav_transactions")
                                 )
 
@@ -102,8 +102,8 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                     icon = { Icon(Icons.Default.AddModerator, contentDescription = "Budget") },
-                                    label = { Text("Budget", maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 10.sp) },
-                                    alwaysShowLabel = false,
+                                    label = { Text("Budget", maxLines = 1, softWrap = false, fontSize = 9.sp) },
+                                    alwaysShowLabel = true,
                                     modifier = Modifier.testTag("nav_budget")
                                 )
 
@@ -117,8 +117,8 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                     icon = { Icon(Icons.Default.Analytics, contentDescription = "Reports") },
-                                    label = { Text("Reports", maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 10.sp) },
-                                    alwaysShowLabel = false,
+                                    label = { Text("Reports", maxLines = 1, softWrap = false, fontSize = 9.sp) },
+                                    alwaysShowLabel = true,
                                     modifier = Modifier.testTag("nav_reports")
                                 )
 
@@ -132,8 +132,8 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                     icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
-                                    label = { Text("Profile", maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 10.sp) },
-                                    alwaysShowLabel = false,
+                                    label = { Text("Profile", maxLines = 1, softWrap = false, fontSize = 9.sp) },
+                                    alwaysShowLabel = true,
                                     modifier = Modifier.testTag("nav_profile")
                                 )
                             }
@@ -143,9 +143,7 @@ class MainActivity : ComponentActivity() {
                     NavHost(
                         navController = navController,
                         startDestination = Screen.Splash.route,
-                        modifier = Modifier.padding(
-                            bottom = if (showBottomBar) innerPadding.calculateBottomPadding() else 0.dp
-                        )
+                        modifier = Modifier.padding(innerPadding)
                     ) {
                         composable(Screen.Splash.route) {
                             SplashScreen(navController, viewModel)

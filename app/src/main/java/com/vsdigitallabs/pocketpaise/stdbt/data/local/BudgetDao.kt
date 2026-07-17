@@ -14,6 +14,18 @@ interface BudgetDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBudget(budget: Budget): Long
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(budgets: List<Budget>)
+
+    @Query("DELETE FROM budgets WHERE userId = :userId")
+    suspend fun deleteAllForUser(userId: Long)
+
+    @Query("SELECT * FROM budgets WHERE isSynced = 0")
+    suspend fun getUnsyncedBudgets(): List<Budget>
+
+    @Query("UPDATE budgets SET isSynced = 1 WHERE isSynced = 0")
+    suspend fun markAllAsSynced()
 
     @Update
     suspend fun updateBudget(budget: Budget)
