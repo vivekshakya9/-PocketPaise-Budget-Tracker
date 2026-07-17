@@ -32,7 +32,12 @@ android {
       keyAlias = "upload"
       keyPassword = System.getenv("KEY_PASSWORD")
     }
-
+    create("debugKey") {
+      storeFile = file("${rootDir}/pocketpaise-keystore.jks")
+      storePassword = "android"
+      keyAlias = "pocketpaise"
+      keyPassword = "android"
+    }
   }
 
   buildTypes {
@@ -45,7 +50,9 @@ android {
           signingConfig = signingConfigs.getByName("release")
       }
     }
-    debug { }
+    debug {
+      signingConfig = signingConfigs.getByName("debugKey")
+    }
   }
   compileOptions {
     sourceCompatibility = JavaVersion.VERSION_11
