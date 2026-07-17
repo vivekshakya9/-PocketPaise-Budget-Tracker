@@ -510,34 +510,6 @@ class PocketPaiseViewModel(
         }
     }
 
-    private fun fetchAndSyncData(userId: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        viewModelScope.launch {
-            try {
-                val syncRes = com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.getSyncData()
-                if (syncRes.isSuccessful && syncRes.body()?.success == true) {
-                    val data = syncRes.body()?.data
-                    if (data != null) {
-                        val transactions = data.transactions.map { it.copy(userId = userId, isSynced = true) }
-                        val budgets = data.budgets.map { it.copy(userId = userId, isSynced = true) }
-                        val goals = data.goals.map { it.copy(userId = userId, isSynced = true) }
-                        repository.syncData(userId, transactions, budgets, goals)
-                        
-                        val balance = transactions.fold(0.0) { acc, tx ->
-                            if (tx.type == "INCOME") acc + tx.amount else acc - tx.amount
-                        }
-                        val user = repository.getUserByIdSync(userId)
-                        if (user != null) {
-                            repository.updateUser(user.copy(pocketMoneyLimit = balance))
-                        }
-                    }
-                }
-                onSuccess()
-            } catch (e: Exception) {
-                // Ignore sync failures so user still logs in if offline
-                onSuccess()
-            }
-        }
-    }
 
     fun logout(onComplete: () -> Unit) {
         _currentUserId.value = null
@@ -558,7 +530,7 @@ class PocketPaiseViewModel(
     }
 
     // --- Transactions Actions ---
-    fun addTransaction(title: String, amount: Double, type: String, category: String, notes: String, receiptUri: String?) {
+    fun addTransaction(title: String, amount: Double, type: String, category: String, notes: String, receiptUri: String? = null) {
         viewModelScope.launch {
             val userId = _currentUserId.value ?: return@launch
             val tx = Transaction(

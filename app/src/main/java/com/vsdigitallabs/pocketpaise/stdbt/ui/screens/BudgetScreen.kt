@@ -167,7 +167,7 @@ fun BudgetScreen(navController: NavController, viewModel: PocketPaiseViewModel) 
             AddBudgetDialog(
                 onDismiss = { showAddBudgetDialog = false },
                 onConfirm = { category, limit ->
-                    viewModel.addBudget(category, limit)
+                    viewModel.addBudget(category, limit, viewModel.currentMonthYear.value)
                     showAddBudgetDialog = false
                 }
             )
