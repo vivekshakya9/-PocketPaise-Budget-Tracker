@@ -1,3 +1,4 @@
+@file:Suppress("DEPRECATION")
 package com.vsdigitallabs.pocketpaise.stdbt
 
 import android.os.Bundle

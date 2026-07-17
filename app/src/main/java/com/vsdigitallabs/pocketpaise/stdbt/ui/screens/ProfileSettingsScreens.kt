@@ -1,3 +1,4 @@
+@file:Suppress("DEPRECATION")
 package com.vsdigitallabs.pocketpaise.stdbt.ui.screens
 
 import android.widget.Toast
