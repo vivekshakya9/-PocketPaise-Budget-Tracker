@@ -129,8 +129,11 @@ fun SplashScreen(navController: NavController, viewModel: PocketPaiseViewModel) 
 fun LoginScreen(navController: NavController, viewModel: PocketPaiseViewModel) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var rememberMe by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
+    var rememberLogin by remember { mutableStateOf(false) }
+    var isGoogleLoading by remember { mutableStateOf(false) }
+
+    val focusManager = LocalFocusManager.current
     var errorMessage by remember { mutableStateOf<String?>(null) }
     
     val scrollState = rememberScrollState()
@@ -322,6 +325,8 @@ fun LoginScreen(navController: NavController, viewModel: PocketPaiseViewModel) {
             // Google Sign-In Button
             OutlinedButton(
                 onClick = {
+                    if (isGoogleLoading) return@OutlinedButton
+                    isGoogleLoading = true
                     val credentialManager = CredentialManager.create(context)
                     val googleIdOption = GetGoogleIdOption.Builder()
                         .setFilterByAuthorizedAccounts(false)
@@ -348,14 +353,21 @@ fun LoginScreen(navController: NavController, viewModel: PocketPaiseViewModel) {
                                     email = googleIdTokenCredential.id,
                                     name = googleIdTokenCredential.displayName ?: "Student",
                                     onSuccess = {
+                                        isGoogleLoading = false
                                         navController.navigate(Screen.Dashboard.route) {
                                             popUpTo(Screen.Login.route) { inclusive = true }
                                         }
                                     },
-                                    onError = { error -> errorMessage = error }
+                                    onError = { error -> 
+                                        isGoogleLoading = false
+                                        errorMessage = error 
+                                    }
                                 )
+                            } else {
+                                isGoogleLoading = false
                             }
                         } catch (e: Exception) {
+                            isGoogleLoading = false
                             errorMessage = e.localizedMessage ?: "Google Sign-In Canceled or Failed"
                         }
                     }
@@ -368,22 +380,30 @@ fun LoginScreen(navController: NavController, viewModel: PocketPaiseViewModel) {
                     contentColor = MaterialTheme.colorScheme.onBackground
                 )
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.AccountBalanceWallet,
-                        contentDescription = "Google Wallet",
-                        tint = MarigoldTertiary,
-                        modifier = Modifier.size(20.dp)
+                if (isGoogleLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.primary,
+                        strokeWidth = 2.dp
                     )
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text(
-                        text = "Sign in with Google",
-                        fontSize = 15.sp,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                } else {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            painter = androidx.compose.ui.res.painterResource(id = com.vsdigitallabs.pocketpaise.stdbt.R.drawable.ic_google_logo),
+                            contentDescription = "Google Logo",
+                            tint = androidx.compose.ui.graphics.Color.Unspecified,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "Sign in with Google",
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
 

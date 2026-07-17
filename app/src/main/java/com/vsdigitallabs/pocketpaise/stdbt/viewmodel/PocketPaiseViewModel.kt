@@ -312,7 +312,7 @@ class PocketPaiseViewModel(
                     
                     // 2. Cache User locally
                     val user = User(
-                        id = serverUserId,
+                        id = 0L, // Let SQLite auto-generate
                         name = name,
                         email = email,
                         mobileNumber = "",
@@ -323,15 +323,20 @@ class PocketPaiseViewModel(
                         currentSavings = 0.0
                     )
                     
+                    val localUserId: Long
                     val existing = repository.getUserByEmail(email)
                     if (existing == null) {
-                        repository.insertUser(user)
+                        localUserId = repository.insertUser(user)
                     } else {
-                        repository.updateUser(user.copy(id = existing.id))
+                        localUserId = existing.id
+                        repository.updateUser(user.copy(id = localUserId))
                     }
                     
-                    _currentUserId.value = existing?.id ?: serverUserId
-                    fetchAndSyncData(serverUserId, onSuccess, onError)
+                    _currentUserId.value = localUserId
+                    
+                    // Navigate immediately, sync in background
+                    onSuccess()
+                    fetchAndSyncData(localUserId, {}, {})
                 } else {
                     val errorString = response.errorBody()?.string()
                     val errorMessage = if (errorString != null) {
