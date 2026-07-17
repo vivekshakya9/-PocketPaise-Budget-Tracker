@@ -264,8 +264,22 @@ class PocketPaiseViewModel(
                     _currentUserId.value = serverUserId
                     onSuccess()
                 } else {
-                    onError(response.body()?.message ?: "Registration failed on server")
+                    val errorString = response.errorBody()?.string()
+                    val errorMessage = if (errorString != null) {
+                        try {
+                            org.json.JSONObject(errorString).getString("message")
+                        } catch (e: Exception) {
+                            "Registration failed on server"
+                        }
+                    } else {
+                        "Registration failed on server"
+                    }
+                    onError(errorMessage)
                 }
+            } catch (e: java.net.UnknownHostException) {
+                onError("No internet connection. Please check your network and try again.")
+            } catch (e: java.net.SocketTimeoutException) {
+                onError("Connection timed out. Please try again.")
             } catch (e: Exception) {
                 onError(e.localizedMessage ?: "Registration failed")
             }
@@ -314,8 +328,22 @@ class PocketPaiseViewModel(
                     _currentUserId.value = existing?.id ?: serverUserId
                     onSuccess()
                 } else {
-                    onError(response.body()?.message ?: "Invalid email or password.")
+                    val errorString = response.errorBody()?.string()
+                    val errorMessage = if (errorString != null) {
+                        try {
+                            org.json.JSONObject(errorString).getString("message")
+                        } catch (e: Exception) {
+                            "Invalid email or password."
+                        }
+                    } else {
+                        "Invalid email or password."
+                    }
+                    onError(errorMessage)
                 }
+            } catch (e: java.net.UnknownHostException) {
+                onError("No internet connection. Please check your network and try again.")
+            } catch (e: java.net.SocketTimeoutException) {
+                onError("Connection timed out. Please try again.")
             } catch (e: Exception) {
                 onError(e.localizedMessage ?: "Login failed")
             }
