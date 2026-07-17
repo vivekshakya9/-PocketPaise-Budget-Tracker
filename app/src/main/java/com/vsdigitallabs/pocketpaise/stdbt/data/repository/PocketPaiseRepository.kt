@@ -28,6 +28,21 @@ class PocketPaiseRepository(
     fun searchTransactions(userId: Long, query: String): Flow<List<Transaction>> = transactionDao.searchTransactions(userId, query)
 
     suspend fun insertTransaction(transaction: Transaction): Long {
+        try {
+            val payload = mapOf(
+                "amount" to transaction.amount,
+                "title" to transaction.title,
+                "notes" to transaction.notes,
+                "category" to transaction.category
+            )
+            if (transaction.type == "INCOME") {
+                com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.createIncome(payload)
+            } else {
+                com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.createExpense(payload)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace() // Best effort offline-first sync
+        }
         val id = transactionDao.insertTransaction(transaction)
         
         // Adjust user balance
@@ -88,6 +103,15 @@ class PocketPaiseRepository(
     }
 
     suspend fun deleteTransaction(transaction: Transaction) {
+        try {
+            if (transaction.type == "INCOME") {
+                com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteIncome(transaction.id)
+            } else {
+                com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteExpense(transaction.id)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
         transactionDao.deleteTransaction(transaction)
         
         // Re-adjust user balance
@@ -119,13 +143,47 @@ class PocketPaiseRepository(
 
     // Budgets
     fun getBudgetsForMonth(userId: Long, monthYear: String): Flow<List<Budget>> = budgetDao.getBudgetsForMonth(userId, monthYear)
-    suspend fun insertBudget(budget: Budget): Long = budgetDao.insertBudget(budget)
+    suspend fun insertBudget(budget: Budget): Long {
+        try {
+            val payload = mapOf(
+                "limitAmount" to budget.limitAmount,
+                "category" to budget.category,
+                "monthYear" to budget.monthYear,
+                "isMonthly" to budget.isMonthly
+            )
+            com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.createBudget(payload)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return budgetDao.insertBudget(budget)
+    }
     suspend fun updateBudget(budget: Budget) = budgetDao.updateBudget(budget)
-    suspend fun deleteBudgetById(id: Long) = budgetDao.deleteBudgetById(id)
+    suspend fun deleteBudgetById(id: Long) {
+        try {
+            com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteBudget(id)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        budgetDao.deleteBudgetById(id)
+    }
 
     // Savings Goals
     fun getSavingsGoals(userId: Long): Flow<List<SavingsGoal>> = savingsGoalDao.getSavingsGoals(userId)
-    suspend fun insertGoal(goal: SavingsGoal): Long = savingsGoalDao.insertGoal(goal)
+    suspend fun insertGoal(goal: SavingsGoal): Long {
+        try {
+            val payload = mapOf(
+                "name" to goal.name,
+                "targetAmount" to goal.targetAmount,
+                "currentAmount" to goal.currentAmount,
+                "targetDate" to goal.targetDate,
+                "isCompleted" to goal.isCompleted
+            )
+            com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.createGoal(payload)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return savingsGoalDao.insertGoal(goal)
+    }
     suspend fun updateGoal(goal: SavingsGoal) {
         savingsGoalDao.updateGoal(goal)
         
@@ -142,7 +200,14 @@ class PocketPaiseRepository(
             )
         }
     }
-    suspend fun deleteGoalById(id: Long) = savingsGoalDao.deleteGoalById(id)
+    suspend fun deleteGoalById(id: Long) {
+        try {
+            com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteGoal(id)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        savingsGoalDao.deleteGoalById(id)
+    }
 
     // Notifications
     fun getAllNotifications(userId: Long): Flow<List<Notification>> = notificationDao.getAllNotifications(userId)

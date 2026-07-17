@@ -86,7 +86,7 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(MaterialTheme.colorScheme.background)
-                    .statusBarsPadding()
+                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top))
                     .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
                 Row(
@@ -196,7 +196,7 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                 .padding(innerPadding)
                 .background(MaterialTheme.colorScheme.background)
                 .verticalScroll(scrollState)
-                .padding(16.dp)
+                .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 120.dp)
         ) {
             // Balance Card
             Card(

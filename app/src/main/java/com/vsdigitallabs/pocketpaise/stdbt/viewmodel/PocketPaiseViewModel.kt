@@ -218,14 +218,8 @@ class PocketPaiseViewModel(
 
     // --- Authentication Actions ---
     fun registerUser(
-        name: String,
-        email: String,
-        mobile: String,
-        college: String,
-        city: String,
-        pass: String,
-        onSuccess: () -> Unit,
-        onError: (String) -> Unit
+        name: String, email: String, mobile: String, college: String, city: String, pass: String,
+        onSuccess: () -> Unit, onError: (String) -> Unit
     ) {
         viewModelScope.launch {
             if (name.isEmpty() || email.isEmpty() || mobile.isEmpty() || pass.isEmpty()) {
@@ -233,24 +227,45 @@ class PocketPaiseViewModel(
                 return@launch
             }
             try {
-                val existing = repository.getUserByEmail(email)
-                if (existing != null) {
-                    onError("Email already registered.")
-                    return@launch
-                }
-                val newUser = User(
-                    name = name,
-                    email = email,
-                    mobileNumber = mobile,
-                    collegeName = college,
-                    city = city,
-                    passwordHash = pass,
-                    pocketMoneyLimit = 0.0,
-                    currentSavings = 0.0
+                // 1. API Call
+                val response = com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.register(
+                    mapOf(
+                        "name" to name, "email" to email, "password" to pass,
+                        "mobile_number" to mobile, "college_name" to college, "city" to city
+                    )
                 )
-                val newId = repository.insertUser(newUser)
-                _currentUserId.value = newId
-                onSuccess()
+                
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val token = response.body()?.data?.token
+                    val serverUserId = response.body()?.data?.user_id?.toLong() ?: 0L
+                    
+                    com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.authToken = token
+                    
+                    // 2. Save locally
+                    val newUser = User(
+                        id = serverUserId,
+                        name = name,
+                        email = email,
+                        mobileNumber = mobile,
+                        collegeName = college,
+                        city = city,
+                        passwordHash = pass,
+                        pocketMoneyLimit = 0.0,
+                        currentSavings = 0.0
+                    )
+                    
+                    val existing = repository.getUserByEmail(email)
+                    if (existing == null) {
+                        repository.insertUser(newUser)
+                    } else {
+                        repository.updateUser(newUser)
+                    }
+                    
+                    _currentUserId.value = serverUserId
+                    onSuccess()
+                } else {
+                    onError(response.body()?.message ?: "Registration failed on server")
+                }
             } catch (e: Exception) {
                 onError(e.localizedMessage ?: "Registration failed")
             }
@@ -264,14 +279,42 @@ class PocketPaiseViewModel(
                 return@launch
             }
             try {
-                val user = repository.getUserByEmail(email)
-                if (user == null) {
-                    onError("No user found with this email.")
-                } else if (user.passwordHash != pass) {
-                    onError("Invalid password.")
-                } else {
-                    _currentUserId.value = user.id
+                // 1. API Call
+                val response = com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.login(
+                    mapOf("email" to email, "password" to pass)
+                )
+                
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val token = response.body()?.data?.token
+                    val serverUserId = response.body()?.data?.user_id?.toLong() ?: 0L
+                    val name = response.body()?.data?.name ?: "User"
+                    
+                    com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.authToken = token
+                    
+                    // 2. Cache User locally
+                    val user = User(
+                        id = serverUserId,
+                        name = name,
+                        email = email,
+                        mobileNumber = "",
+                        collegeName = "",
+                        city = "",
+                        passwordHash = pass,
+                        pocketMoneyLimit = 0.0,
+                        currentSavings = 0.0
+                    )
+                    
+                    val existing = repository.getUserByEmail(email)
+                    if (existing == null) {
+                        repository.insertUser(user)
+                    } else {
+                        repository.updateUser(user.copy(id = existing.id))
+                    }
+                    
+                    _currentUserId.value = existing?.id ?: serverUserId
                     onSuccess()
+                } else {
+                    onError(response.body()?.message ?: "Invalid email or password.")
                 }
             } catch (e: Exception) {
                 onError(e.localizedMessage ?: "Login failed")

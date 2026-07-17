@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -70,7 +71,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                     icon = { Icon(Icons.Default.Home, contentDescription = "Home") },
-                                    label = { Text("Home") },
+                                    label = { Text("Home", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                                     alwaysShowLabel = false,
                                     modifier = Modifier.testTag("nav_home")
                                 )
@@ -85,7 +86,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                     icon = { Icon(Icons.Default.ReceiptLong, contentDescription = "Transactions") },
-                                    label = { Text("Transactions") },
+                                    label = { Text("Transactions", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                                     alwaysShowLabel = false,
                                     modifier = Modifier.testTag("nav_transactions")
                                 )
@@ -100,7 +101,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                     icon = { Icon(Icons.Default.AddModerator, contentDescription = "Budget") },
-                                    label = { Text("Budget") },
+                                    label = { Text("Budget", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                                     alwaysShowLabel = false,
                                     modifier = Modifier.testTag("nav_budget")
                                 )
@@ -115,7 +116,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                     icon = { Icon(Icons.Default.Analytics, contentDescription = "Reports") },
-                                    label = { Text("Reports") },
+                                    label = { Text("Reports", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                                     alwaysShowLabel = false,
                                     modifier = Modifier.testTag("nav_reports")
                                 )
@@ -130,7 +131,7 @@ class MainActivity : ComponentActivity() {
                                         }
                                     },
                                     icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
-                                    label = { Text("Profile") },
+                                    label = { Text("Profile", maxLines = 1, overflow = TextOverflow.Ellipsis) },
                                     alwaysShowLabel = false,
                                     modifier = Modifier.testTag("nav_profile")
                                 )
