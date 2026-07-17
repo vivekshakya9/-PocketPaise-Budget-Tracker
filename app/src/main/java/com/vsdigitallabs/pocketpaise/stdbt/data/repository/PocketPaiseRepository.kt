@@ -148,8 +148,7 @@ class PocketPaiseRepository(
             val payload = mapOf(
                 "limitAmount" to budget.limitAmount,
                 "category" to budget.category,
-                "monthYear" to budget.monthYear,
-                "isMonthly" to budget.isMonthly
+                "monthYear" to budget.monthYear
             )
             com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.createBudget(payload)
         } catch (e: Exception) {

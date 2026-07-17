@@ -46,4 +46,8 @@ object RetrofitClient {
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
     }
+
+    val apiService: ApiService by lazy {
+        retrofit.create(ApiService::class.java)
+    }
 }
