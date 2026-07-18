@@ -24,9 +24,18 @@ class PocketPaiseViewModel(
     private val repository: PocketPaiseRepository
 ) : AndroidViewModel(application) {
 
+    private val prefs = application.getSharedPreferences("PocketPaisePrefs", android.content.Context.MODE_PRIVATE)
+
     // Authentication States
     private val _currentUserId = MutableStateFlow<Long?>(null)
     val currentUserId: StateFlow<Long?> = _currentUserId.asStateFlow()
+
+    init {
+        val savedId = prefs.getLong("currentUserId", -1L)
+        if (savedId != -1L) {
+            _currentUserId.value = savedId
+        }
+    }
 
     val currentUser: StateFlow<User?> = _currentUserId
         .flatMapLatest { id ->
@@ -333,6 +342,7 @@ class PocketPaiseViewModel(
                     }
                     
                     _currentUserId.value = localUserId
+                    prefs.edit().putLong("currentUserId", localUserId).apply()
                     
                     // Navigate immediately, sync in background
                     onSuccess()
@@ -463,6 +473,7 @@ class PocketPaiseViewModel(
                     }
                     
                     _currentUserId.value = localUserId
+                    prefs.edit().putLong("currentUserId", localUserId).apply()
                     
                     // Navigate immediately, sync in background
                     onSuccess()
@@ -497,9 +508,9 @@ class PocketPaiseViewModel(
                 if (syncRes.isSuccessful && syncRes.body()?.success == true) {
                     val data = syncRes.body()?.data
                     if (data != null) {
-                        val transactions = data.transactions.map { it.copy(userId = localUserId, isSynced = true) }
-                        val budgets = data.budgets.map { it.copy(userId = localUserId, isSynced = true) }
-                        val goals = data.goals.map { it.copy(userId = localUserId, isSynced = true) }
+                        val transactions = data.transactions.map { it.copy(userId = localUserId, isSynced = true, serverId = it.id, id = 0L) }
+                        val budgets = data.budgets.map { it.copy(userId = localUserId, isSynced = true, serverId = it.id, id = 0L) }
+                        val goals = data.goals.map { it.copy(userId = localUserId, isSynced = true, serverId = it.id, id = 0L) }
                         repository.syncData(localUserId, transactions, budgets, goals)
                         
                         // Calculate total balances correctly after sync
@@ -523,6 +534,8 @@ class PocketPaiseViewModel(
 
     fun logout(onComplete: () -> Unit) {
         _currentUserId.value = null
+        prefs.edit().remove("currentUserId").apply()
+        com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.authToken = null
         onComplete()
     }
 
@@ -547,7 +560,7 @@ class PocketPaiseViewModel(
             val apiData = mapOf(
                 "title" to title,
                 "amount" to amount.toString(),
-                "category_id" to "1", // Hardcoded or map if categories exist
+                "category" to category,
                 "notes" to notes
             )
             

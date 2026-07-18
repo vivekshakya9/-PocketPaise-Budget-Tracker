@@ -38,8 +38,10 @@ object ExportUtil {
                 writer.write("$date,$title,$type,$cat,$amt,$notes\n")
             }
             writer.close()
+            android.widget.Toast.makeText(context, "Exported successfully!", android.widget.Toast.LENGTH_SHORT).show()
             shareFile(context, file, "text/csv")
         } catch (e: Exception) {
+            android.widget.Toast.makeText(context, "Export failed: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
             e.printStackTrace()
         }
     }
@@ -99,8 +101,10 @@ object ExportUtil {
         try {
             pdfDocument.writeTo(FileOutputStream(file))
             pdfDocument.close()
+            android.widget.Toast.makeText(context, "Exported successfully!", android.widget.Toast.LENGTH_SHORT).show()
             shareFile(context, file, "application/pdf")
         } catch (e: Exception) {
+            android.widget.Toast.makeText(context, "Export failed: ${e.message}", android.widget.Toast.LENGTH_LONG).show()
             e.printStackTrace()
         }
     }

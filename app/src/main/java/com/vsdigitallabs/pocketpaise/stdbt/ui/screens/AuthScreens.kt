@@ -133,6 +133,7 @@ fun LoginScreen(navController: NavController, viewModel: PocketPaiseViewModel) {
     var passwordVisible by remember { mutableStateOf(false) }
     var rememberLogin by remember { mutableStateOf(false) }
     var isGoogleLoading by remember { mutableStateOf(false) }
+    var isLoginLoading by remember { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -295,15 +296,19 @@ fun LoginScreen(navController: NavController, viewModel: PocketPaiseViewModel) {
             // Login Button
             Button(
                 onClick = {
+                    if (isLoginLoading) return@Button
+                    isLoginLoading = true
                     viewModel.loginUser(
                         email = email,
                         pass = password,
                         onSuccess = {
+                            isLoginLoading = false
                             navController.navigate(Screen.Dashboard.route) {
                                 popUpTo(Screen.Login.route) { inclusive = true }
                             }
                         },
                         onError = { error ->
+                            isLoginLoading = false
                             errorMessage = error
                         }
                     )
@@ -314,11 +319,19 @@ fun LoginScreen(navController: NavController, viewModel: PocketPaiseViewModel) {
                     .testTag("login_button"),
                 shape = RoundedCornerShape(12.dp)
             ) {
-                Text(
-                    text = "Login Securely",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                if (isLoginLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text(
+                        text = "Login Securely",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
