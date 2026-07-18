@@ -34,6 +34,7 @@ class PocketPaiseViewModel(
         val savedId = prefs.getLong("currentUserId", -1L)
         if (savedId != -1L) {
             _currentUserId.value = savedId
+            fetchAndSyncData(savedId, {}, {})
         }
     }
 

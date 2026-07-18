@@ -15,5 +15,6 @@ data class Transaction(
     val notes: String = "",
     val receiptUri: String? = null,
     val serverId: Long = 0L,
+    val uuid: String = java.util.UUID.randomUUID().toString(),
     val isSynced: Boolean = false
 )
