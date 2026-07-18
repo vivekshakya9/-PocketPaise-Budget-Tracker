@@ -47,6 +47,11 @@ class MainActivity : FragmentActivity() {
         val workRequest = androidx.work.PeriodicWorkRequestBuilder<com.vsdigitallabs.pocketpaise.stdbt.worker.BudgetAlertWorker>(24, java.util.concurrent.TimeUnit.HOURS).build()
         androidx.work.WorkManager.getInstance(this).enqueueUniquePeriodicWork("BudgetAlert", androidx.work.ExistingPeriodicWorkPolicy.KEEP, workRequest)
 
+        // Schedule Daily Expense Reminder Notification (Time controlled by Admin)
+        val prefs = getSharedPreferences("PocketPaisePrefs", android.content.Context.MODE_PRIVATE)
+        val reminderTimeStr = prefs.getString("daily_reminder_time", "21:00") ?: "21:00"
+        com.vsdigitallabs.pocketpaise.stdbt.worker.DailyReminderManager.scheduleReminder(this, reminderTimeStr)
+
         setContent {
             val viewModel: PocketPaiseViewModel = viewModel(
                 factory = PocketPaiseViewModelFactory(application)

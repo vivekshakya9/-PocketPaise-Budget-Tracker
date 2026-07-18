@@ -123,14 +123,8 @@ class PocketPaiseViewModel(
     private val _selectedLanguage = MutableStateFlow("English")
     val selectedLanguage: StateFlow<String> = _selectedLanguage.asStateFlow()
 
-    private val _reminderTime = MutableStateFlow("21:00") // 9 PM daily budget review
-    val reminderTime: StateFlow<String> = _reminderTime.asStateFlow()
-
     private val _dateFormat = MutableStateFlow("dd MMM yyyy")
     val dateFormat: StateFlow<String> = _dateFormat.asStateFlow()
-
-    private val _isBiometricEnabled = MutableStateFlow(false)
-    val isBiometricEnabled: StateFlow<Boolean> = _isBiometricEnabled.asStateFlow()
 
     init {
         // Initialize month/year
@@ -835,20 +829,12 @@ class PocketPaiseViewModel(
         _selectedCurrency.value = symbol
     }
 
-    fun setLanguage(lang: String) {
-        _selectedLanguage.value = lang
-    }
-
-    fun setReminderTime(time: String) {
-        _reminderTime.value = time
+    fun setLanguage(language: String) {
+        _selectedLanguage.value = language
     }
 
     fun setDateFormat(format: String) {
         _dateFormat.value = format
-    }
-
-    fun setBiometricEnabled(enabled: Boolean) {
-        _isBiometricEnabled.value = enabled
     }
 
     // Mock notification push trigger for testing FCM feature

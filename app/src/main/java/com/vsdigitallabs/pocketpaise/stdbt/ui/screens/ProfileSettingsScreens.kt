@@ -478,45 +478,12 @@ fun SettingsScreen(navController: NavController, viewModel: PocketPaiseViewModel
     val isDarkMode by viewModel.isDarkMode.collectAsState()
     val currency by viewModel.selectedCurrency.collectAsState()
     val language by viewModel.selectedLanguage.collectAsState()
-    val reminderTime by viewModel.reminderTime.collectAsState()
     val dateFormat by viewModel.dateFormat.collectAsState()
-    val isBiometricEnabled by viewModel.isBiometricEnabled.collectAsState()
     val context = LocalContext.current
-    val activity = context as? androidx.fragment.app.FragmentActivity
 
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
-    var showReminderTimeDialog by remember { mutableStateOf(false) }
     var showDateFormatDialog by remember { mutableStateOf(false) }
-
-    fun showBiometricPrompt() {
-        if (activity == null) {
-            Toast.makeText(context, "Biometric authentication is not available", Toast.LENGTH_SHORT).show()
-            return
-        }
-        val executor = androidx.core.content.ContextCompat.getMainExecutor(context)
-        val biometricPrompt = androidx.biometric.BiometricPrompt(activity, executor,
-            object : androidx.biometric.BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationSucceeded(result: androidx.biometric.BiometricPrompt.AuthenticationResult) {
-                    super.onAuthenticationSucceeded(result)
-                    viewModel.setBiometricEnabled(!isBiometricEnabled)
-                    Toast.makeText(context, "App Lock ${if (!isBiometricEnabled) "Enabled" else "Disabled"}", Toast.LENGTH_SHORT).show()
-                }
-
-                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    super.onAuthenticationError(errorCode, errString)
-                    Toast.makeText(context, "Authentication error: $errString", Toast.LENGTH_SHORT).show()
-                }
-            })
-
-        val promptInfo = androidx.biometric.BiometricPrompt.PromptInfo.Builder()
-            .setTitle("Verify Identity")
-            .setSubtitle("Confirm your identity to change App Lock settings")
-            .setNegativeButtonText("Cancel")
-            .build()
-
-        biometricPrompt.authenticate(promptInfo)
-    }
 
     Scaffold(
         topBar = {
@@ -609,22 +576,6 @@ fun SettingsScreen(navController: NavController, viewModel: PocketPaiseViewModel
 
                     HorizontalDivider()
 
-                    // Daily reminder time selection
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { showReminderTimeDialog = true },
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Default.Alarm, contentDescription = "Reminder", tint = MaterialTheme.colorScheme.primary)
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(text = "Daily Expense Reminder", fontSize = 14.sp)
-                        }
-                        Text(text = reminderTime, fontWeight = FontWeight.Bold, color = MarigoldTertiary, fontSize = 14.sp)
-                    }
-
                     HorizontalDivider()
 
                     // Date Format selection
@@ -645,34 +596,6 @@ fun SettingsScreen(navController: NavController, viewModel: PocketPaiseViewModel
                 }
             }
             
-
-            // Security Card
-            Card(
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Fingerprint, contentDescription = "App Lock", tint = MaterialTheme.colorScheme.primary)
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Column {
-                            Text(text = "Biometric App Lock", fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                            Text(text = "Require fingerprint/face to open app", fontSize = 11.sp, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f))
-                        }
-                    }
-
-                    Switch(
-                        checked = isBiometricEnabled,
-                        onCheckedChange = { showBiometricPrompt() }
-                    )
-                }
-            }
 
             // Database Operations Card (Backup & Restore)
             Card(
@@ -869,30 +792,6 @@ fun SettingsScreen(navController: NavController, viewModel: PocketPaiseViewModel
                     }
                 },
                 confirmButton = {}
-            )
-        }
-
-        if (showReminderTimeDialog) {
-            var timeInput by remember { mutableStateOf(reminderTime) }
-            AlertDialog(
-                onDismissRequest = { showReminderTimeDialog = false },
-                title = { Text("Daily Reminder Time (24h)") },
-                text = {
-                    OutlinedTextField(
-                        value = timeInput,
-                        onValueChange = { timeInput = it },
-                        label = { Text("Enter Time (e.g. 21:00)") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                },
-                confirmButton = {
-                    Button(onClick = {
-                        viewModel.setReminderTime(timeInput)
-                        showReminderTimeDialog = false
-                    }) {
-                        Text("Save")
-                    }
-                }
             )
         }
     }
