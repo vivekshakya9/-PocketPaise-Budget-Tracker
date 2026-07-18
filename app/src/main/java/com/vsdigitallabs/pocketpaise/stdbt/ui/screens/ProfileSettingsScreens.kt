@@ -623,6 +623,10 @@ fun SettingsScreen(navController: NavController, viewModel: PocketPaiseViewModel
                             Text(text = "Daily Expense Reminder", fontSize = 14.sp)
                         }
                         Text(text = reminderTime, fontWeight = FontWeight.Bold, color = MarigoldTertiary, fontSize = 14.sp)
+                    }
+
+                    HorizontalDivider()
+
                     // Date Format selection
                     Row(
                         modifier = Modifier
@@ -641,6 +645,7 @@ fun SettingsScreen(navController: NavController, viewModel: PocketPaiseViewModel
                 }
             }
             
+
             // Security Card
             Card(
                 shape = RoundedCornerShape(12.dp),

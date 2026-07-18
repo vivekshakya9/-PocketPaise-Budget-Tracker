@@ -153,7 +153,7 @@ fun InteractivePieChart(
             .fillMaxSize()
             .pointerInput(data) {
                 detectTapGestures { tapOffset ->
-                    val center = Offset(size.width / 2, size.height / 2)
+                    val center = Offset(size.width / 2f, size.height / 2f)
                     val dx = tapOffset.x - center.x
                     val dy = tapOffset.y - center.y
                     
@@ -177,7 +177,7 @@ fun InteractivePieChart(
                 }
             }
         ) {
-            val center = Offset(size.width / 2, size.height / 2)
+            val center = Offset(size.width / 2f, size.height / 2f)
             val radius = minOf(size.width, size.height) / 2
             
             var startAngle = -90f // Start from top
