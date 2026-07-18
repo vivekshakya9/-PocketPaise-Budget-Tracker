@@ -21,6 +21,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.FirebaseApp
+import com.google.firebase.messaging.FirebaseMessaging
 import com.vsdigitallabs.pocketpaise.stdbt.ui.navigation.Screen
 import com.vsdigitallabs.pocketpaise.stdbt.ui.screens.*
 import com.vsdigitallabs.pocketpaise.stdbt.ui.theme.PocketPaiseTheme
@@ -36,6 +38,8 @@ import com.google.accompanist.permissions.rememberPermissionState
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        FirebaseApp.initializeApp(this)
+        FirebaseMessaging.getInstance().subscribeToTopic("global")
         enableEdgeToEdge()
         setContent {
             val viewModel: PocketPaiseViewModel = viewModel(

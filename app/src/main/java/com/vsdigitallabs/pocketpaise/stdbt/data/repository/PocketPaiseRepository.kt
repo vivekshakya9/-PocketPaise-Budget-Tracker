@@ -22,13 +22,13 @@ class PocketPaiseRepository(
 
     // Sync functions
     suspend fun syncData(userId: Long, transactions: List<Transaction>, budgets: List<Budget>, goals: List<SavingsGoal>) {
-        transactionDao.deleteAllForUser(userId)
+        transactionDao.deleteAllSyncedForUser(userId)
         transactionDao.insertAll(transactions)
         
-        budgetDao.deleteAllForUser(userId)
+        budgetDao.deleteAllSyncedForUser(userId)
         budgetDao.insertAll(budgets)
         
-        savingsGoalDao.deleteAllForUser(userId)
+        savingsGoalDao.deleteAllSyncedForUser(userId)
         savingsGoalDao.insertAll(goals)
     }
 
