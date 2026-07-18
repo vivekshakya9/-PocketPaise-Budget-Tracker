@@ -15,14 +15,17 @@ interface NotificationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertNotification(notification: Notification): Long
 
+    @Update
+    suspend fun updateNotification(notification: Notification)
+
+    @Delete
+    suspend fun deleteNotification(notification: Notification)
+    
     @Query("UPDATE notifications SET isRead = 1 WHERE userId = :userId")
     suspend fun markAllAsRead(userId: Long)
 
     @Query("UPDATE notifications SET isRead = 1 WHERE id = :id")
     suspend fun markAsRead(id: Long)
-
-    @Delete
-    suspend fun deleteNotification(notification: Notification)
 
     @Query("DELETE FROM notifications WHERE id = :id")
     suspend fun deleteNotificationById(id: Long)

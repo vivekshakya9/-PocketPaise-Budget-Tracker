@@ -268,28 +268,15 @@ fun ReportsScreen(navController: NavController, viewModel: PocketPaiseViewModel)
                                 .padding(24.dp),
                             contentAlignment = Alignment.BottomCenter
                         ) {
-                            Canvas(modifier = Modifier.fillMaxSize()) {
-                                val maxVal = maxOf(totalIncome, totalExpense, 1000.0).toFloat()
-                                val barWidth = 60.dp.toPx()
-                                val canvasWidth = size.width
-                                val canvasHeight = size.height
-
-                                // Draw Income Bar
-                                val incomeHeight = (totalIncome.toFloat() / maxVal) * canvasHeight
-                                drawRect(
-                                    color = RupeeGreen,
-                                    topLeft = Offset(x = (canvasWidth / 2) - barWidth - 20f, y = canvasHeight - incomeHeight),
-                                    size = Size(width = barWidth, height = incomeHeight)
-                                )
-
-                                // Draw Expense Bar
-                                val expenseHeight = (totalExpense.toFloat() / maxVal) * canvasHeight
-                                drawRect(
-                                    color = ExpenseRed,
-                                    topLeft = Offset(x = (canvasWidth / 2) + 20f, y = canvasHeight - expenseHeight),
-                                    size = Size(width = barWidth, height = expenseHeight)
-                                )
-                            }
+                            val barData = listOf(
+                                com.vsdigitallabs.pocketpaise.stdbt.ui.components.ChartData("Income", totalIncome.toFloat(), RupeeGreen),
+                                com.vsdigitallabs.pocketpaise.stdbt.ui.components.ChartData("Expense", totalExpense.toFloat(), ExpenseRed)
+                            )
+                            com.vsdigitallabs.pocketpaise.stdbt.ui.components.InteractiveBarChart(
+                                data = barData,
+                                modifier = Modifier.fillMaxSize(),
+                                currencySymbol = currencySymbol
+                            )
                         }
                         
                         Row(
@@ -344,25 +331,24 @@ fun ReportsScreen(navController: NavController, viewModel: PocketPaiseViewModel)
                                             .padding(8.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Canvas(modifier = Modifier.fillMaxSize()) {
-                                            var startAngle = 270f
-                                            val colors = listOf(
-                                                Color(0xFFE57373), Color(0xFF64B5F6), Color(0xFF81C784),
-                                                Color(0xFFFFD54F), Color(0xFFBA68C8), Color(0xFF4DB6AC),
-                                                Color(0xFFFF8A65), Color(0xFFAED581), Color(0xFF90A4AE)
+                                        val colors = listOf(
+                                            Color(0xFFE57373), Color(0xFF64B5F6), Color(0xFF81C784),
+                                            Color(0xFFFFD54F), Color(0xFFBA68C8), Color(0xFF4DB6AC),
+                                            Color(0xFFFF8A65), Color(0xFFAED581), Color(0xFF90A4AE)
+                                        )
+                                        val pieData = categoryGroups.entries.mapIndexed { index, entry ->
+                                            com.vsdigitallabs.pocketpaise.stdbt.ui.components.ChartData(
+                                                label = entry.key,
+                                                value = entry.value.toFloat(),
+                                                color = colors[index % colors.size]
                                             )
-                                            
-                                            categoryGroups.entries.forEachIndexed { index, entry ->
-                                                val sweep = ((entry.value / totalSpent) * 360f).toFloat()
-                                                drawArc(
-                                                    color = colors[index % colors.size],
-                                                    startAngle = startAngle,
-                                                    sweepAngle = sweep,
-                                                    useCenter = true
-                                                )
-                                                startAngle += sweep
-                                            }
                                         }
+                                        com.vsdigitallabs.pocketpaise.stdbt.ui.components.InteractivePieChart(
+                                            data = pieData,
+                                            modifier = Modifier.fillMaxSize(),
+                                            currencySymbol = currencySymbol,
+                                            holeColor = MaterialTheme.colorScheme.surface
+                                        )
                                     }
 
                                     Spacer(modifier = Modifier.width(16.dp))

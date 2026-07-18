@@ -126,6 +126,12 @@ class PocketPaiseViewModel(
     private val _reminderTime = MutableStateFlow("21:00") // 9 PM daily budget review
     val reminderTime: StateFlow<String> = _reminderTime.asStateFlow()
 
+    private val _dateFormat = MutableStateFlow("dd MMM yyyy")
+    val dateFormat: StateFlow<String> = _dateFormat.asStateFlow()
+
+    private val _isBiometricEnabled = MutableStateFlow(false)
+    val isBiometricEnabled: StateFlow<Boolean> = _isBiometricEnabled.asStateFlow()
+
     init {
         // Initialize month/year
         val cal = Calendar.getInstance()
@@ -835,6 +841,14 @@ class PocketPaiseViewModel(
 
     fun setReminderTime(time: String) {
         _reminderTime.value = time
+    }
+
+    fun setDateFormat(format: String) {
+        _dateFormat.value = format
+    }
+
+    fun setBiometricEnabled(enabled: Boolean) {
+        _isBiometricEnabled.value = enabled
     }
 
     // Mock notification push trigger for testing FCM feature

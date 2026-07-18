@@ -1,6 +1,7 @@
 @file:Suppress("DEPRECATION")
 package com.vsdigitallabs.pocketpaise.stdbt
 
+import androidx.fragment.app.FragmentActivity
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -35,12 +36,17 @@ import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 
 @OptIn(ExperimentalPermissionsApi::class)
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FirebaseApp.initializeApp(this)
         FirebaseMessaging.getInstance().subscribeToTopic("global")
         enableEdgeToEdge()
+
+        // Enqueue Daily Budget Alert Worker
+        val workRequest = androidx.work.PeriodicWorkRequestBuilder<com.vsdigitallabs.pocketpaise.stdbt.worker.BudgetAlertWorker>(24, java.util.concurrent.TimeUnit.HOURS).build()
+        androidx.work.WorkManager.getInstance(this).enqueueUniquePeriodicWork("BudgetAlert", androidx.work.ExistingPeriodicWorkPolicy.KEEP, workRequest)
+
         setContent {
             val viewModel: PocketPaiseViewModel = viewModel(
                 factory = PocketPaiseViewModelFactory(application)
