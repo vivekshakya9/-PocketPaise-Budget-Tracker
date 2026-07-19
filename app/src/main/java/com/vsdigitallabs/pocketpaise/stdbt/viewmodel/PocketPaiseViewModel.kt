@@ -31,10 +31,15 @@ class PocketPaiseViewModel(
     val currentUserId: StateFlow<Long?> = _currentUserId.asStateFlow()
 
     init {
-        val savedId = prefs.getLong("currentUserId", -1L)
-        if (savedId != -1L) {
-            _currentUserId.value = savedId
-            fetchAndSyncData(savedId, {}, {})
+        val savedToken = prefs.getString("authToken", null)
+        if (savedToken != null) {
+            com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.authToken = savedToken
+        }
+
+        val savedUserId = prefs.getLong("currentUserId", -1L)
+        if (savedUserId != -1L) {
+            _currentUserId.value = savedUserId
+            fetchAndSyncData(savedUserId, {}, {})
         }
     }
 
@@ -258,6 +263,7 @@ class PocketPaiseViewModel(
                     val serverUserId = response.body()?.data?.user_id?.toLong() ?: 0L
                     
                     com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.authToken = token
+                    prefs.edit().putString("authToken", token).apply()
                     
                     // 2. Save locally
                     val newUser = User(
@@ -322,6 +328,7 @@ class PocketPaiseViewModel(
                     val name = response.body()?.data?.name ?: "User"
                     
                     com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.authToken = token
+                    prefs.edit().putString("authToken", token).apply()
                     
                     // 2. Cache User locally
                     val user = User(
@@ -454,6 +461,7 @@ class PocketPaiseViewModel(
                     val serverUserId = response.body()?.data?.user_id?.toLong() ?: 0L
                     
                     com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.authToken = token
+                    prefs.edit().putString("authToken", token).apply()
                     
                     val user = User(
                         id = 0L,
@@ -571,7 +579,7 @@ class PocketPaiseViewModel(
 
     fun logout(onComplete: () -> Unit) {
         _currentUserId.value = null
-        prefs.edit().remove("currentUserId").apply()
+        prefs.edit().remove("currentUserId").remove("authToken").apply()
         com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.authToken = null
         onComplete()
     }

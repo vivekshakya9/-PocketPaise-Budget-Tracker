@@ -20,6 +20,14 @@ class SyncWorker(
         val savingsGoalDao = database.savingsGoalDao()
         val userDao = database.userDao()
 
+        val prefs = applicationContext.getSharedPreferences("pocketpaise_prefs", Context.MODE_PRIVATE)
+        val token = prefs.getString("authToken", null)
+        if (token != null) {
+            RetrofitClient.authToken = token
+        } else {
+            return Result.failure()
+        }
+
         try {
             // Find a user ID (for simple app, we can just grab the first logged-in user)
             val user = userDao.getUserByIdSync(1) // Assuming ID 1 or we need a way to pass userId
