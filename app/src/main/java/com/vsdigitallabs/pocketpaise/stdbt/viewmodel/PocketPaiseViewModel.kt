@@ -123,6 +123,9 @@ class PocketPaiseViewModel(
     private val _selectedLanguage = MutableStateFlow("English")
     val selectedLanguage: StateFlow<String> = _selectedLanguage.asStateFlow()
 
+    private val _reminderTime = MutableStateFlow(prefs.getString("daily_reminder_time", "21:00") ?: "21:00")
+    val reminderTime: StateFlow<String> = _reminderTime.asStateFlow()
+
     private val _dateFormat = MutableStateFlow("dd MMM yyyy")
     val dateFormat: StateFlow<String> = _dateFormat.asStateFlow()
 
@@ -831,6 +834,12 @@ class PocketPaiseViewModel(
 
     fun setLanguage(language: String) {
         _selectedLanguage.value = language
+    }
+
+    fun setReminderTime(context: android.content.Context, time: String) {
+        _reminderTime.value = time
+        prefs.edit().putString("daily_reminder_time", time).apply()
+        com.vsdigitallabs.pocketpaise.stdbt.worker.DailyReminderManager.scheduleReminder(context, time)
     }
 
     fun setDateFormat(format: String) {

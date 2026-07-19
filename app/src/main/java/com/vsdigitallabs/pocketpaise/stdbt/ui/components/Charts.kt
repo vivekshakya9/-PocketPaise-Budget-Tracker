@@ -109,7 +109,7 @@ fun InteractiveBarChart(
             Box(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
-                    .offset(y = (-40).dp)
+                    .padding(top = 8.dp)
                     .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
                     .padding(horizontal = 12.dp, vertical = 6.dp)
             ) {

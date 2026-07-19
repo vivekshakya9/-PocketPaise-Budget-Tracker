@@ -478,11 +478,13 @@ fun SettingsScreen(navController: NavController, viewModel: PocketPaiseViewModel
     val isDarkMode by viewModel.isDarkMode.collectAsState()
     val currency by viewModel.selectedCurrency.collectAsState()
     val language by viewModel.selectedLanguage.collectAsState()
+    val reminderTime by viewModel.reminderTime.collectAsState()
     val dateFormat by viewModel.dateFormat.collectAsState()
     val context = LocalContext.current
 
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showReminderTimeDialog by remember { mutableStateOf(false) }
     var showDateFormatDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -575,6 +577,22 @@ fun SettingsScreen(navController: NavController, viewModel: PocketPaiseViewModel
                     }
 
                     HorizontalDivider()
+
+                    // Daily reminder time selection
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { showReminderTimeDialog = true },
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Alarm, contentDescription = "Reminder", tint = MaterialTheme.colorScheme.primary)
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(text = "Daily Expense Reminder", fontSize = 14.sp)
+                        }
+                        Text(text = reminderTime, fontWeight = FontWeight.Bold, color = MarigoldTertiary, fontSize = 14.sp)
+                    }
 
                     HorizontalDivider()
 
@@ -792,6 +810,31 @@ fun SettingsScreen(navController: NavController, viewModel: PocketPaiseViewModel
                     }
                 },
                 confirmButton = {}
+            )
+        }
+
+        if (showReminderTimeDialog) {
+            var timeInput by remember { mutableStateOf(reminderTime) }
+            AlertDialog(
+                onDismissRequest = { showReminderTimeDialog = false },
+                title = { Text("Daily Reminder Time (24h)") },
+                text = {
+                    OutlinedTextField(
+                        value = timeInput,
+                        onValueChange = { timeInput = it },
+                        label = { Text("Enter Time (e.g. 21:00)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        viewModel.setReminderTime(context, timeInput)
+                        showReminderTimeDialog = false
+                        Toast.makeText(context, "Reminder time updated", Toast.LENGTH_SHORT).show()
+                    }) {
+                        Text("Save")
+                    }
+                }
             )
         }
     }
