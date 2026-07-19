@@ -564,9 +564,7 @@ class PocketPaiseViewModel(
                         if (updatedUser != null) {
                             repository.updateUser(updatedUser)
                         }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
+                
                 onSuccess()
             } catch (e: Exception) {
                 // If sync fails, still let user log in, but show toast or message if possible
