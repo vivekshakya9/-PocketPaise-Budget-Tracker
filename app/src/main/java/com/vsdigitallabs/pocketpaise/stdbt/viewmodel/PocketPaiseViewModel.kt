@@ -512,9 +512,9 @@ class PocketPaiseViewModel(
                 if (syncRes.isSuccessful && syncRes.body()?.success == true) {
                     val data = syncRes.body()?.data
                     if (data != null) {
-                        val transactions = data.transactions.map { it.copy(userId = localUserId, isSynced = true, serverId = it.id, id = 0L) }
-                        val budgets = data.budgets.map { it.copy(userId = localUserId, isSynced = true, serverId = it.id, id = 0L) }
-                        val goals = data.goals.map { it.copy(userId = localUserId, isSynced = true, serverId = it.id, id = 0L) }
+                        val transactions = data.transactions.map { it.toTransaction(localUserId) }
+                        val budgets = data.budgets.map { it.toBudget(localUserId) }
+                        val goals = data.goals.map { it.toSavingsGoal(localUserId) }
                         repository.syncData(localUserId, transactions, budgets, goals)
                         
                         // Calculate total balances correctly after sync

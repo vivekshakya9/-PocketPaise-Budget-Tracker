@@ -35,9 +35,9 @@ class SyncWorker(
             }
 
             val syncData = SyncData(
-                transactions = unsyncedTx,
-                budgets = unsyncedBudgets,
-                goals = unsyncedGoals
+                transactions = unsyncedTx.map { com.vsdigitallabs.pocketpaise.stdbt.data.model.NetworkTransaction(it.serverId, it.title, it.amount, it.type, it.category, it.timestamp, it.notes, it.receiptUri, it.uuid) },
+                budgets = unsyncedBudgets.map { com.vsdigitallabs.pocketpaise.stdbt.data.model.NetworkBudget(it.serverId, it.category, it.limitAmount, it.monthYear, it.uuid) },
+                goals = unsyncedGoals.map { com.vsdigitallabs.pocketpaise.stdbt.data.model.NetworkSavingsGoal(it.serverId, it.name, it.targetAmount, it.currentAmount, it.targetDate, it.isCompleted, it.uuid) }
             )
 
             val response = RetrofitClient.apiService.pushSyncData(syncData)
