@@ -822,8 +822,6 @@ class PocketPaiseViewModel(
                 )
             )
             enqueueSyncWorker()
-            
-            onComplete()
         }
     }
 
