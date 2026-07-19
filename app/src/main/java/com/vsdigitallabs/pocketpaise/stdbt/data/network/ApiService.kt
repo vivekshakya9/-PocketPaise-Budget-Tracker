@@ -71,6 +71,13 @@ interface ApiService {
 
     @POST("goals.php")
     suspend fun createGoal(@Body goal: Map<String, Any>): Response<ApiResponse<Any>>
+
+    // Profile
+    @GET("profile.php")
+    suspend fun getProfile(): Response<ApiResponse<Map<String, Any>>>
+
+    @POST("profile.php")
+    suspend fun updateProfile(@Body profileData: Map<String, Any>): Response<ApiResponse<Any>>
     
     @PUT("goals.php")
     suspend fun updateGoal(@Body goal: Map<String, Any>): Response<ApiResponse<Any>>

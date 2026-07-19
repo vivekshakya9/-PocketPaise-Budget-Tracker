@@ -521,9 +521,42 @@ class PocketPaiseViewModel(
                         val balance = transactions.fold(0.0) { acc, tx ->
                             if (tx.type == "INCOME") acc + tx.amount else acc - tx.amount
                         }
-                        val user = repository.getUserByIdSync(localUserId)
-                        if (user != null) {
-                            repository.updateUser(user.copy(pocketMoneyLimit = balance))
+                        
+                        var updatedUser = repository.getUserByIdSync(localUserId)
+                        
+                        // Fetch remote profile data to ensure absolute sync
+                        try {
+                            val profileRes = com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.getProfile()
+                            if (profileRes.isSuccessful && profileRes.body()?.success == true) {
+                                val profileData = profileRes.body()?.data
+                                if (profileData != null && updatedUser != null) {
+                                    val rName = profileData["name"] as? String ?: updatedUser.name
+                                    val rMobile = profileData["mobile_number"] as? String ?: updatedUser.mobileNumber
+                                    val rCollege = profileData["college_name"] as? String ?: updatedUser.collegeName
+                                    val rCity = profileData["city"] as? String ?: updatedUser.city
+                                    // Override balances if provided by server
+                                    val rPocketMoney = (profileData["pocketMoneyLimit"] as? Number)?.toDouble() ?: balance
+                                    val rSavings = (profileData["currentSavings"] as? Number)?.toDouble() ?: updatedUser.currentSavings
+                                    
+                                    updatedUser = updatedUser.copy(
+                                        name = rName,
+                                        mobileNumber = rMobile,
+                                        collegeName = rCollege,
+                                        city = rCity,
+                                        pocketMoneyLimit = rPocketMoney,
+                                        currentSavings = rSavings
+                                    )
+                                }
+                            } else {
+                                // If profile fetch fails, fallback to calculated balance
+                                updatedUser = updatedUser?.copy(pocketMoneyLimit = balance)
+                            }
+                        } catch (e: Exception) {
+                            updatedUser = updatedUser?.copy(pocketMoneyLimit = balance)
+                        }
+
+                        if (updatedUser != null) {
+                            repository.updateUser(updatedUser)
                         }
                     }
                 }
@@ -553,6 +586,21 @@ class PocketPaiseViewModel(
                 mobileNumber = mobile
             )
             repository.updateUser(updated)
+            
+            // Push profile update to server
+            try {
+                val profileData = mapOf(
+                    "name" to name,
+                    "mobile_number" to mobile,
+                    "college_name" to college,
+                    "city" to city,
+                    "pocketMoneyLimit" to updated.pocketMoneyLimit,
+                    "currentSavings" to updated.currentSavings
+                )
+                com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.updateProfile(profileData)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -633,7 +681,9 @@ class PocketPaiseViewModel(
 
     fun updateTransaction(oldTx: Transaction, newTx: Transaction) {
         viewModelScope.launch {
-            repository.updateTransaction(oldTx, newTx)
+            val txToSave = newTx.copy(isSynced = false)
+            repository.updateTransaction(oldTx, txToSave)
+            enqueueSyncWorker()
         }
     }
 
@@ -754,7 +804,8 @@ class PocketPaiseViewModel(
             val isCompleted = updatedGoalAmount >= goal.targetAmount
             val updatedGoal = goal.copy(
                 currentAmount = updatedGoalAmount,
-                isCompleted = isCompleted
+                isCompleted = isCompleted,
+                isSynced = false
             )
             repository.updateGoal(updatedGoal)
             
@@ -766,9 +817,13 @@ class PocketPaiseViewModel(
                     amount = amount,
                     type = "EXPENSE",
                     category = "Savings",
-                    timestamp = System.currentTimeMillis()
+                    timestamp = System.currentTimeMillis(),
+                    isSynced = false
                 )
             )
+            enqueueSyncWorker()
+            
+            onComplete()
         }
     }
 
