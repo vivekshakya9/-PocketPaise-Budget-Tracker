@@ -8,11 +8,39 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import java.util.concurrent.TimeUnit
 
+import com.squareup.moshi.FromJson
+import com.squareup.moshi.ToJson
+import com.squareup.moshi.JsonReader
+
+class LenientBooleanAdapter {
+    @FromJson
+    fun fromJson(reader: JsonReader): Boolean {
+        return when (reader.peek()) {
+            JsonReader.Token.BOOLEAN -> reader.nextBoolean()
+            JsonReader.Token.NUMBER -> reader.nextInt() != 0
+            JsonReader.Token.STRING -> {
+                val str = reader.nextString()
+                str == "1" || str.equals("true", ignoreCase = true)
+            }
+            else -> {
+                reader.skipValue()
+                false
+            }
+        }
+    }
+
+    @ToJson
+    fun toJson(writer: com.squareup.moshi.JsonWriter, value: Boolean?) {
+        writer.value(value)
+    }
+}
+
 object RetrofitClient {
     // API URL based on the user's host
     private const val BASE_URL = "https://pocketpaise.universitytak.in/backend/api/"
 
     private val moshi = Moshi.Builder()
+        .add(LenientBooleanAdapter())
         .add(KotlinJsonAdapterFactory())
         .build()
 
