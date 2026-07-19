@@ -674,10 +674,13 @@ class PocketPaiseViewModel(
         }
     }
 
-    fun deleteBudget(budget: Budget) {
+    fun deleteBudget(id: Long) {
         viewModelScope.launch {
-            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.deleteBudget(budget.userId, budget.uuid)
-            repository.deleteBudget(budget)
+            val budget = repository.getBudgetByIdSync(id)
+            if (budget != null) {
+                com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.deleteBudget(budget.userId, budget.uuid)
+                repository.deleteBudgetById(id)
+            }
         }
     }
 
@@ -748,10 +751,13 @@ class PocketPaiseViewModel(
         }
     }
 
-    fun deleteGoal(goal: SavingsGoal) {
+    fun deleteGoal(id: Long) {
         viewModelScope.launch {
-            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.deleteGoal(goal.userId, goal.uuid)
-            repository.deleteGoal(goal)
+            val goal = repository.getGoalByIdSync(id)
+            if (goal != null) {
+                com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.deleteGoal(goal.userId, goal.uuid)
+                repository.deleteGoalById(id)
+            }
         }
     }
 
