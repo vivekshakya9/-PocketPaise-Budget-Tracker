@@ -16,7 +16,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.NetworkType
 import androidx.work.Constraints
-import com.vsdigitallabs.pocketpaise.stdbt.worker.SyncWorker
+
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PocketPaiseViewModel(
@@ -516,14 +516,12 @@ class PocketPaiseViewModel(
     private fun fetchAndSyncData(localUserId: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
-                val syncRes = com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.getSyncData()
-                if (syncRes.isSuccessful && syncRes.body()?.success == true) {
-                    val data = syncRes.body()?.data
-                    if (data != null) {
-                        val transactions = data.transactions.map { it.toTransaction(localUserId) }
-                        val budgets = data.budgets.map { it.toBudget(localUserId) }
-                        val goals = data.goals.map { it.toSavingsGoal(localUserId) }
-                        repository.syncData(localUserId, transactions, budgets, goals)
+                // Fetch from Firebase Realtime Database
+                val transactions = com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.getTransactions(localUserId)
+                val budgets = com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.getBudgets(localUserId)
+                val goals = com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.getGoals(localUserId)
+                
+                repository.syncData(localUserId, transactions, budgets, goals)
                         
                         // Calculate total balances correctly after sync
                         val balance = transactions.fold(0.0) { acc, tx ->
@@ -566,11 +564,13 @@ class PocketPaiseViewModel(
                         if (updatedUser != null) {
                             repository.updateUser(updatedUser)
                         }
+                    } catch (e: Exception) {
+                        e.printStackTrace()
                     }
-                }
                 onSuccess()
             } catch (e: Exception) {
                 // If sync fails, still let user log in, but show toast or message if possible
+                e.printStackTrace()
                 onSuccess()
             }
         }
@@ -616,82 +616,34 @@ class PocketPaiseViewModel(
         viewModelScope.launch {
             val userId = _currentUserId.value ?: return@launch
             
-            // Format for API
-            val apiData = mapOf(
-                "title" to title,
-                "amount" to amount.toString(),
-                "category" to category,
-                "notes" to notes
+            val tx = Transaction(
+                userId = userId,
+                title = title,
+                amount = amount,
+                type = type,
+                category = category,
+                timestamp = System.currentTimeMillis(),
+                notes = notes,
+                receiptUri = receiptUri,
+                isSynced = true
             )
-            
-            try {
-                val apiRes = if (type == "INCOME") {
-                    com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.createIncome(apiData)
-                } else {
-                    com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.createExpense(apiData)
-                }
-                
-                var serverId = 0L
-                if (apiRes.isSuccessful && apiRes.body()?.success == true) {
-                    val data = apiRes.body()?.data as? Map<*, *>
-                    serverId = (data?.get("id") as? Number)?.toLong() ?: 0L
-                }
-
-                val tx = Transaction(
-                    userId = userId,
-                    title = title,
-                    amount = amount,
-                    type = type,
-                    category = category,
-                    timestamp = System.currentTimeMillis(),
-                    notes = notes,
-                    receiptUri = receiptUri,
-                    serverId = serverId,
-                    isSynced = serverId > 0
-                )
-                repository.insertTransaction(tx)
-                if (serverId == 0L) enqueueSyncWorker()
-            } catch (e: Exception) {
-                // Fallback to local
-                val tx = Transaction(
-                    userId = userId,
-                    title = title,
-                    amount = amount,
-                    type = type,
-                    category = category,
-                    timestamp = System.currentTimeMillis(),
-                    notes = notes,
-                    receiptUri = receiptUri,
-                    isSynced = false
-                )
-                repository.insertTransaction(tx)
-                enqueueSyncWorker()
-            }
+            repository.insertTransaction(tx)
+            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.saveTransaction(userId, tx)
         }
     }
 
     fun deleteTransaction(tx: Transaction) {
         viewModelScope.launch {
-            try {
-                if (tx.serverId > 0) {
-                    if (tx.type == "INCOME") {
-                        com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteIncome(tx.serverId)
-                    } else {
-                        com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteExpense(tx.serverId)
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.deleteTransaction(tx.userId, tx.uuid)
             repository.deleteTransaction(tx)
         }
     }
 
     fun updateTransaction(oldTx: Transaction, newTx: Transaction) {
         viewModelScope.launch {
-            val txToSave = newTx.copy(isSynced = false)
+            val txToSave = newTx.copy(isSynced = true)
             repository.updateTransaction(oldTx, txToSave)
-            enqueueSyncWorker()
+            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.saveTransaction(txToSave.userId, txToSave)
         }
     }
 
@@ -712,46 +664,22 @@ class PocketPaiseViewModel(
         viewModelScope.launch {
             val userId = _currentUserId.value ?: return@launch
             
-            val apiData = mapOf(
-                "amount" to limitAmount.toString(),
-                "month_year" to monthYear
-            )
-            
-            var serverId = 0L
-            try {
-                val apiRes = com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.createBudget(apiData)
-                if (apiRes.isSuccessful && apiRes.body()?.success == true) {
-                    val data = apiRes.body()?.data as? Map<*, *>
-                    serverId = (data?.get("id") as? Number)?.toLong() ?: 0L
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-
-            val budget = Budget(
+            val b = Budget(
                 userId = userId,
                 category = category,
                 limitAmount = limitAmount,
                 monthYear = monthYear,
-                serverId = serverId,
-                isSynced = serverId > 0
+                isSynced = true
             )
-            repository.insertBudget(budget)
-            if (serverId == 0L) enqueueSyncWorker()
+            repository.insertBudget(b)
+            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.saveBudget(userId, b)
         }
     }
 
-    fun deleteBudget(id: Long) {
+    fun deleteBudget(budget: Budget) {
         viewModelScope.launch {
-            val budget = repository.getBudgetByIdSync(id)
-            try {
-                if (budget != null && budget.serverId > 0) {
-                    com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteBudget(budget.serverId)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-            repository.deleteBudgetById(id)
+            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.deleteBudget(budget.userId, budget.uuid)
+            repository.deleteBudget(budget)
         }
     }
 
@@ -760,35 +688,16 @@ class PocketPaiseViewModel(
         viewModelScope.launch {
             val userId = _currentUserId.value ?: return@launch
             
-            val apiData = mapOf(
-                "name" to name,
-                "target" to targetAmount.toString(),
-                "current" to "0",
-                "date" to java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(targetDate))
-            )
-            
-            var serverId = 0L
-            try {
-                val apiRes = com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.createGoal(apiData)
-                if (apiRes.isSuccessful && apiRes.body()?.success == true) {
-                    val data = apiRes.body()?.data as? Map<*, *>
-                    serverId = (data?.get("id") as? Number)?.toLong() ?: 0L
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-
             val goal = SavingsGoal(
                 userId = userId,
                 name = name,
                 targetAmount = targetAmount,
                 currentAmount = 0.0,
                 targetDate = targetDate,
-                serverId = serverId,
-                isSynced = serverId > 0
+                isSynced = true
             )
             repository.insertGoal(goal)
-            if (serverId == 0L) enqueueSyncWorker()
+            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.saveGoal(userId, goal)
         }
     }
 
@@ -813,37 +722,38 @@ class PocketPaiseViewModel(
             val updatedGoal = goal.copy(
                 currentAmount = updatedGoalAmount,
                 isCompleted = isCompleted,
-                isSynced = false
+                isSynced = true
             )
             repository.updateGoal(updatedGoal)
+            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.saveGoal(user.id, updatedGoal)
             
             // Add a matching tracking transaction for transparency
-            repository.insertTransaction(
-                Transaction(
-                    userId = user.id,
-                    title = "Saved for: ${goal.name}",
-                    amount = amount,
-                    type = "EXPENSE",
-                    category = "Savings",
-                    timestamp = System.currentTimeMillis(),
-                    isSynced = false
-                )
+            val tx = Transaction(
+                userId = user.id,
+                title = "Saved for: ${goal.name}",
+                amount = amount,
+                type = "EXPENSE",
+                category = "Savings",
+                timestamp = System.currentTimeMillis(),
+                isSynced = true
             )
-            enqueueSyncWorker()
+            repository.insertTransaction(tx)
+            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.saveTransaction(user.id, tx)
         }
     }
 
-    fun deleteGoal(id: Long) {
+    fun updateGoal(goal: SavingsGoal) {
         viewModelScope.launch {
-            val goal = repository.getGoalByIdSync(id)
-            try {
-                if (goal != null && goal.serverId > 0) {
-                    com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteGoal(goal.serverId)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-            repository.deleteGoalById(id)
+            val goalToSave = goal.copy(isSynced = true)
+            repository.updateGoal(goalToSave)
+            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.saveGoal(goalToSave.userId, goalToSave)
+        }
+    }
+
+    fun deleteGoal(goal: SavingsGoal) {
+        viewModelScope.launch {
+            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.deleteGoal(goal.userId, goal.uuid)
+            repository.deleteGoal(goal)
         }
     }
 
@@ -872,16 +782,6 @@ class PocketPaiseViewModel(
             val userId = _currentUserId.value ?: return@launch
             repository.clearAllNotifications(userId)
         }
-    }
-
-    private fun enqueueSyncWorker() {
-        val constraints = Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.CONNECTED)
-            .build()
-        val syncWorkRequest = OneTimeWorkRequestBuilder<SyncWorker>()
-            .setConstraints(constraints)
-            .build()
-        WorkManager.getInstance(getApplication()).enqueue(syncWorkRequest)
     }
 
     // Settings adjustments

@@ -43,6 +43,7 @@ credentials = "1.5.0"
 googleid = "1.1.1"
 firebaseCrashlyticsPlugin = "3.0.2"
 playServicesAds = "23.6.0"
+firebaseDatabase = "20.3.1"
 
 
 [libraries]
@@ -103,6 +104,7 @@ firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics
 firebase-crashlytics = { group = "com.google.firebase", name = "firebase-crashlytics" }
 firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
+firebase-database = { module = "com.google.firebase:firebase-database-ktx", version.ref = "firebaseDatabase" }
 
 
 [plugins]

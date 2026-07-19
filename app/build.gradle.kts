@@ -122,6 +122,8 @@ dependencies {
   implementation(libs.googleid)
   
   // Firebase Analytics, Crashlytics, Messaging, AdMob
+  // implementation(libs.firebase.firestore)
+  implementation(libs.firebase.database)
   implementation(libs.firebase.analytics)
   implementation(libs.firebase.crashlytics)
   implementation(libs.firebase.messaging)
