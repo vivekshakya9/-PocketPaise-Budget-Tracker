@@ -252,18 +252,21 @@ class PocketPaiseViewModel(
                     
                     val appMap = config["app"] as? Map<*, *>
                     if (appMap != null) {
-                        editor.putBoolean("maintenance_mode", (appMap["maintenance_mode"] as? Number)?.toInt() == 1)
-                        editor.putString("maintenance_message", appMap["maintenance_message"] as? String ?: "")
-                        editor.putString("daily_reminder_message", appMap["daily_reminder_message"] as? String ?: "")
-                        editor.putString("daily_reminder_time", appMap["daily_reminder_time"] as? String ?: "")
-                        editor.putString("support_email", appMap["support_email"] as? String ?: "")
+                        val maintenanceMode = appMap["maintenance_mode"]?.toString()?.toIntOrNull() ?: 0
+                        editor.putBoolean("maintenance_mode", maintenanceMode == 1)
+                        editor.putString("maintenance_message", appMap["maintenance_message"]?.toString() ?: "")
+                        editor.putString("daily_reminder_message", appMap["daily_reminder_message"]?.toString() ?: "")
+                        editor.putString("daily_reminder_time", appMap["daily_reminder_time"]?.toString() ?: "")
+                        editor.putString("support_email", appMap["support_email"]?.toString() ?: "")
                     }
                     
                     val admobMap = config["admob"] as? Map<*, *>
                     if (admobMap != null) {
-                        editor.putBoolean("admob_test_mode", (admobMap["test_mode"] as? Number)?.toInt() == 1)
-                        editor.putBoolean("banner_enabled", (admobMap["banner_enabled"] as? Number)?.toInt() == 1)
-                        editor.putString("banner_unit_id", admobMap["banner_unit_id"] as? String ?: "")
+                        val testMode = admobMap["test_mode"]?.toString()?.toIntOrNull() ?: 1
+                        val bannerEnabled = admobMap["banner_enabled"]?.toString()?.toIntOrNull() ?: 0
+                        editor.putBoolean("admob_test_mode", testMode == 1)
+                        editor.putBoolean("banner_enabled", bannerEnabled == 1)
+                        editor.putString("banner_unit_id", admobMap["banner_unit_id"]?.toString() ?: "")
                     }
                     
                     editor.apply()
