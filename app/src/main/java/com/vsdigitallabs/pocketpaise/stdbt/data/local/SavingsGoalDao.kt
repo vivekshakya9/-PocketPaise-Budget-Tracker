@@ -27,8 +27,8 @@ interface SavingsGoalDao {
     @Query("SELECT * FROM savings_goals WHERE isSynced = 0")
     suspend fun getUnsyncedGoals(): List<SavingsGoal>
 
-    @Query("UPDATE savings_goals SET isSynced = 1 WHERE isSynced = 0")
-    suspend fun markAllAsSynced()
+    @Query("UPDATE savings_goals SET isSynced = 1 WHERE id IN (:ids)")
+    suspend fun markAsSynced(ids: List<Long>)
 
     @Update
     suspend fun updateGoal(goal: SavingsGoal)

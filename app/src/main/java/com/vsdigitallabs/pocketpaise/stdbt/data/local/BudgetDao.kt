@@ -30,8 +30,8 @@ interface BudgetDao {
     @Query("SELECT * FROM budgets WHERE isSynced = 0")
     suspend fun getUnsyncedBudgets(): List<Budget>
 
-    @Query("UPDATE budgets SET isSynced = 1 WHERE isSynced = 0")
-    suspend fun markAllAsSynced()
+    @Query("UPDATE budgets SET isSynced = 1 WHERE id IN (:ids)")
+    suspend fun markAsSynced(ids: List<Long>)
 
     @Update
     suspend fun updateBudget(budget: Budget)

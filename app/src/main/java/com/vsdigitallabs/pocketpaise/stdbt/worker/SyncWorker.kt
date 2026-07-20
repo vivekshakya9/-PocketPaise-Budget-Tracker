@@ -18,12 +18,16 @@ class SyncWorker(appContext: Context, workerParams: WorkerParameters) : Coroutin
         val savingsGoalDao = database.savingsGoalDao()
         val deletedItemDao = database.deletedItemDao()
 
-        val userId = applicationContext.getSharedPreferences("PocketPaisePrefs", Context.MODE_PRIVATE)
-            .getLong("currentUserId", -1L)
+        val prefs = applicationContext.getSharedPreferences("PocketPaisePrefs", Context.MODE_PRIVATE)
+        val userId = prefs.getLong("currentUserId", -1L)
+        val token = prefs.getString("authToken", null)
 
-        if (userId == -1L || RetrofitClient.authToken.isNullOrEmpty()) {
+        if (userId == -1L || token.isNullOrEmpty()) {
             return@withContext Result.success() // Not logged in, nothing to sync
         }
+        
+        // Ensure RetrofitClient has the token for this background process
+        RetrofitClient.authToken = token
 
         try {
             // 1. Gather all unsynced local data
@@ -64,10 +68,16 @@ class SyncWorker(appContext: Context, workerParams: WorkerParameters) : Coroutin
             // 2. Push to server
             val pushResponse = RetrofitClient.apiService.pushSyncData(syncRequest)
             if (pushResponse.isSuccessful && pushResponse.body()?.success == true) {
-                // Mark as synced locally
-                transactionDao.markAllAsSynced()
-                budgetDao.markAllAsSynced()
-                savingsGoalDao.markAllAsSynced()
+                // Mark as synced locally using specific IDs
+                if (unsyncedTransactions.isNotEmpty()) {
+                    transactionDao.markAsSynced(unsyncedTransactions.map { it.id })
+                }
+                if (unsyncedBudgets.isNotEmpty()) {
+                    budgetDao.markAsSynced(unsyncedBudgets.map { it.id })
+                }
+                if (unsyncedGoals.isNotEmpty()) {
+                    savingsGoalDao.markAsSynced(unsyncedGoals.map { it.id })
+                }
                 
                 // Clear deleted items
                 deletedItemDao.clearAll()
