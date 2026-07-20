@@ -748,6 +748,10 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                 }
             )
         }
+
+        // AdMob Banner at the bottom of Dashboard Screen
+        val context = androidx.compose.ui.platform.LocalContext.current
+        AdMobBanner(context = context)
     }
 }
 
@@ -839,8 +843,6 @@ fun TransactionItem(
                 )
             }
         }
-        
-        AdMobBanner(context = context)
     }
 }
 
