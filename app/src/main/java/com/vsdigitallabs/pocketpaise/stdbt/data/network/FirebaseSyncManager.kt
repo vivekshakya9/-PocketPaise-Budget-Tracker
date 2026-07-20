@@ -10,7 +10,7 @@ import com.vsdigitallabs.pocketpaise.stdbt.data.model.SavingsGoal
 import kotlinx.coroutines.tasks.await
 
 object FirebaseSyncManager {
-    private val database = FirebaseDatabase.getInstance()
+    private val database = FirebaseDatabase.getInstance("https://pocketpaise-b7c71-default-rtdb.asia-southeast1.firebasedatabase.app")
 
     // --- TRANSACTIONS ---
     
