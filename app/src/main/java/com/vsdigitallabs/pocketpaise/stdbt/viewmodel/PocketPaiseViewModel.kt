@@ -332,7 +332,7 @@ class PocketPaiseViewModel(
                     
                     // 2. Cache User locally
                     val user = User(
-                        id = 0L, // Let SQLite auto-generate
+                        id = serverUserId, // Use server ID directly to avoid cross-user data leakage!
                         name = name,
                         email = email,
                         mobileNumber = "",
@@ -343,21 +343,22 @@ class PocketPaiseViewModel(
                         currentSavings = 0.0
                     )
                     
-                    val localUserId: Long
                     val existing = repository.getUserByEmail(email)
                     if (existing == null) {
-                        localUserId = repository.insertUser(user)
+                        repository.insertUser(user)
                     } else {
-                        localUserId = existing.id
-                        repository.updateUser(user.copy(id = localUserId))
+                        repository.updateUser(user)
                     }
                     
-                    _currentUserId.value = localUserId
-                    prefs.edit().putLong("currentUserId", localUserId).apply()
+                    _currentUserId.value = serverUserId
+                    prefs.edit().putLong("currentUserId", serverUserId).apply()
                     
-                    // Navigate immediately, sync in background
-                    onSuccess()
-                    fetchAndSyncData(localUserId, {}, {})
+                    // Fetch data from server to populate DB
+                    fetchAndSyncData(serverUserId, onSuccess = {
+                        onSuccess()
+                    }, onError = {
+                        onSuccess()
+                    })
                 } else {
                     val errorString = response.errorBody()?.string()
                     val errorMessage = if (errorString != null) {
@@ -464,7 +465,7 @@ class PocketPaiseViewModel(
                     prefs.edit().putString("authToken", token).apply()
                     
                     val user = User(
-                        id = 0L,
+                        id = serverUserId,
                         name = name,
                         email = email,
                         mobileNumber = "",
@@ -475,21 +476,19 @@ class PocketPaiseViewModel(
                         currentSavings = 0.0
                     )
                     
-                    val localUserId: Long
                     val existing = repository.getUserByEmail(email)
                     if (existing == null) {
-                        localUserId = repository.insertUser(user)
+                        repository.insertUser(user)
                     } else {
-                        localUserId = existing.id
-                        repository.updateUser(user.copy(id = localUserId))
+                        repository.updateUser(user)
                     }
                     
-                    _currentUserId.value = localUserId
-                    prefs.edit().putLong("currentUserId", localUserId).apply()
+                    _currentUserId.value = serverUserId
+                    prefs.edit().putLong("currentUserId", serverUserId).apply()
                     
                     // Navigate immediately, sync in background
                     onSuccess()
-                    fetchAndSyncData(localUserId, {}, {})
+                    fetchAndSyncData(serverUserId, {}, {})
                 } else {
                     val errorString = response.errorBody()?.string()
                     val errorMessage = if (errorString != null) {
