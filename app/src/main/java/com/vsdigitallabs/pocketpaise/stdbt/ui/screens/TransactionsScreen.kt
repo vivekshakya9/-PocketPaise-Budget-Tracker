@@ -29,7 +29,9 @@ import com.vsdigitallabs.pocketpaise.stdbt.data.model.Transaction
 import com.vsdigitallabs.pocketpaise.stdbt.ui.theme.ExpenseRed
 import com.vsdigitallabs.pocketpaise.stdbt.ui.theme.MarigoldTertiary
 import com.vsdigitallabs.pocketpaise.stdbt.ui.theme.RupeeGreen
+import com.vsdigitallabs.pocketpaise.stdbt.utils.PdfExporter
 import com.vsdigitallabs.pocketpaise.stdbt.viewmodel.PocketPaiseViewModel
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -44,6 +46,7 @@ fun TransactionsScreen(navController: NavController, viewModel: PocketPaiseViewM
     val currencySymbol by viewModel.selectedCurrency.collectAsState()
 
     var showExportDialog by remember { mutableStateOf<String?>(null) } // "PDF" or "Excel" or null
+    val coroutineScope = rememberCoroutineScope()
     var showCategoryFilterMenu by remember { mutableStateOf(false) }
 
     val allCategories = listOf(
@@ -243,7 +246,12 @@ fun TransactionsScreen(navController: NavController, viewModel: PocketPaiseViewM
                 },
                 confirmButton = {
                     Button(
-                        onClick = { showExportDialog = null }
+                        onClick = { 
+                            showExportDialog = null
+                            coroutineScope.launch {
+                                PdfExporter.exportTransactionsToPdf(context, transactions)
+                            }
+                        }
                     ) {
                         Text(text = "Download File")
                     }
