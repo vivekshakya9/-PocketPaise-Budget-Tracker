@@ -35,6 +35,8 @@ class PocketPaiseViewModel(
         if (savedToken != null) {
             com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.authToken = savedToken
         }
+        
+        fetchRemoteConfig()
 
         val savedUserId = prefs.getLong("currentUserId", -1L)
         if (savedUserId != -1L) {
@@ -240,6 +242,38 @@ class PocketPaiseViewModel(
     }
 
     // --- Authentication Actions ---
+    fun fetchRemoteConfig() {
+        viewModelScope.launch {
+            try {
+                val response = com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.getConfig()
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val config = response.body()?.data ?: return@launch
+                    val editor = prefs.edit()
+                    
+                    val appMap = config["app"] as? Map<*, *>
+                    if (appMap != null) {
+                        editor.putBoolean("maintenance_mode", (appMap["maintenance_mode"] as? Number)?.toInt() == 1)
+                        editor.putString("maintenance_message", appMap["maintenance_message"] as? String ?: "")
+                        editor.putString("daily_reminder_message", appMap["daily_reminder_message"] as? String ?: "")
+                        editor.putString("daily_reminder_time", appMap["daily_reminder_time"] as? String ?: "")
+                        editor.putString("support_email", appMap["support_email"] as? String ?: "")
+                    }
+                    
+                    val admobMap = config["admob"] as? Map<*, *>
+                    if (admobMap != null) {
+                        editor.putBoolean("admob_test_mode", (admobMap["test_mode"] as? Number)?.toInt() == 1)
+                        editor.putBoolean("banner_enabled", (admobMap["banner_enabled"] as? Number)?.toInt() == 1)
+                        editor.putString("banner_unit_id", admobMap["banner_unit_id"] as? String ?: "")
+                    }
+                    
+                    editor.apply()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     fun registerUser(
         name: String, email: String, mobile: String, college: String, city: String, pass: String,
         onSuccess: () -> Unit, onError: (String) -> Unit

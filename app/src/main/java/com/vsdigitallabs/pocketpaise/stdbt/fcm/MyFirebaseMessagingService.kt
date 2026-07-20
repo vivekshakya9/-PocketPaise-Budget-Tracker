@@ -40,17 +40,21 @@ class MyFirebaseMessagingService : FirebaseMessagingService() {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val db = AppDatabase.getDatabase(applicationContext)
-                // Assuming we just store it for user 1 or whoever is logged in 
-                // (In a real app we might get current user id from DataStore)
-                db.notificationDao().insertNotification(
-                    Notification(
-                        userId = 1, // Default fallback
-                        title = title,
-                        message = message,
-                        timestamp = System.currentTimeMillis(),
-                        type = type
+                
+                val prefs = applicationContext.getSharedPreferences("PocketPaisePrefs", Context.MODE_PRIVATE)
+                val userId = prefs.getLong("currentUserId", -1L)
+                
+                if (userId != -1L) {
+                    db.notificationDao().insertNotification(
+                        Notification(
+                            userId = userId,
+                            title = title,
+                            message = message,
+                            timestamp = System.currentTimeMillis(),
+                            type = type
+                        )
                     )
-                )
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }

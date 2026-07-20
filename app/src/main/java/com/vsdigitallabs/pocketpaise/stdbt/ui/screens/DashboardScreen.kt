@@ -39,6 +39,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardType
 import com.vsdigitallabs.pocketpaise.stdbt.ui.theme.*
 import com.vsdigitallabs.pocketpaise.stdbt.viewmodel.PocketPaiseViewModel
+import com.vsdigitallabs.pocketpaise.stdbt.ui.components.AdMobBanner
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -838,6 +839,8 @@ fun TransactionItem(
                 )
             }
         }
+        
+        AdMobBanner(context = context)
     }
 }
 

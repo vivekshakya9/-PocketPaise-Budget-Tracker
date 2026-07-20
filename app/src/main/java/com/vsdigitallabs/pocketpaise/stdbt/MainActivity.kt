@@ -34,6 +34,7 @@ import android.os.Build
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
+import com.google.android.gms.ads.MobileAds
 
 @OptIn(ExperimentalPermissionsApi::class)
 class MainActivity : FragmentActivity() {
@@ -41,6 +42,7 @@ class MainActivity : FragmentActivity() {
         super.onCreate(savedInstanceState)
         FirebaseApp.initializeApp(this)
         FirebaseMessaging.getInstance().subscribeToTopic("global")
+        MobileAds.initialize(this) {}
         enableEdgeToEdge()
 
         // Enqueue Daily Budget Alert Worker
@@ -57,11 +59,18 @@ class MainActivity : FragmentActivity() {
                 factory = PocketPaiseViewModelFactory(application)
             )
             val isDarkMode by viewModel.isDarkMode.collectAsState()
+            
+            val prefs = getSharedPreferences("PocketPaisePrefs", android.content.Context.MODE_PRIVATE)
+            val isMaintenanceMode = prefs.getBoolean("maintenance_mode", false)
+            val maintenanceMessage = prefs.getString("maintenance_message", "") ?: ""
 
             PocketPaiseTheme(darkTheme = isDarkMode) {
-                val navController = rememberNavController()
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val currentRoute = navBackStackEntry?.destination?.route
+                if (isMaintenanceMode) {
+                    MaintenanceScreen(message = maintenanceMessage)
+                } else {
+                    val navController = rememberNavController()
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentRoute = navBackStackEntry?.destination?.route
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                     val notificationPermissionState = rememberPermissionState(
@@ -230,6 +239,7 @@ class MainActivity : FragmentActivity() {
                         }
                     }
                 }
+                } // End of else block for maintenance mode
             }
         }
     }
