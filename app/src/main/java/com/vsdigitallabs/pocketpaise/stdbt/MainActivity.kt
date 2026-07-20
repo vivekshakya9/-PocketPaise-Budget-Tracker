@@ -41,11 +41,6 @@ class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         FirebaseApp.initializeApp(this)
-        try {
-            com.google.firebase.database.FirebaseDatabase.getInstance().setPersistenceEnabled(true)
-        } catch (e: Exception) {
-            // Might throw if called after DB is already used in a previous activity launch
-        }
         FirebaseMessaging.getInstance().subscribeToTopic("global")
         MobileAds.initialize(this) {}
         enableEdgeToEdge()

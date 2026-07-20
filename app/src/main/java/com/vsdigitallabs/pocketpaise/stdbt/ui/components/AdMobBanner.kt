@@ -15,9 +15,8 @@ fun AdMobBanner(context: Context, modifier: Modifier = Modifier) {
     val bannerEnabled = prefs.getBoolean("banner_enabled", false)
     val testMode = prefs.getBoolean("admob_test_mode", true)
     
-    // Fallback to test ID if test mode is on, or if no ID is set
     var unitId = prefs.getString("banner_unit_id", "") ?: ""
-    if (testMode || unitId.isEmpty()) {
+    if (unitId.isEmpty()) {
         unitId = "ca-app-pub-3940256099942544/6300978111" // Google Test Banner ID
     }
 

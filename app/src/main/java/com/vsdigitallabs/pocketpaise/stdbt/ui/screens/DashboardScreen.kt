@@ -136,15 +136,16 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                                     Box(
                                         modifier = Modifier
                                             .align(Alignment.TopEnd)
-                                            .size(16.dp)
+                                            .offset(x = 4.dp, y = (-4).dp)
+                                            .defaultMinSize(minWidth = 18.dp, minHeight = 18.dp)
                                             .clip(CircleShape)
-                                            .background(MaterialTheme.colorScheme.primary)
-                                            .padding(2.dp),
+                                            .background(MaterialTheme.colorScheme.error)
+                                            .padding(horizontal = 4.dp, vertical = 2.dp),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
                                             text = unreadNotificationsCount.toString(),
-                                            color = MaterialTheme.colorScheme.onPrimary,
+                                            color = MaterialTheme.colorScheme.onError,
                                             fontSize = 9.sp,
                                             fontWeight = FontWeight.Bold
                                         )
