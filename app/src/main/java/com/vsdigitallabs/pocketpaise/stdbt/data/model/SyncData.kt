@@ -72,5 +72,8 @@ data class NetworkSavingsGoal(
 data class SyncData(
     val transactions: List<NetworkTransaction> = emptyList(),
     val budgets: List<NetworkBudget> = emptyList(),
-    val goals: List<NetworkSavingsGoal> = emptyList()
+    val goals: List<NetworkSavingsGoal> = emptyList(),
+    val deleted_transactions: List<String> = emptyList(),
+    val deleted_budgets: List<String> = emptyList(),
+    val deleted_goals: List<String> = emptyList()
 )

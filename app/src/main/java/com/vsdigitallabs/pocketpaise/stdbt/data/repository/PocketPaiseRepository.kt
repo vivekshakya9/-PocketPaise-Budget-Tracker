@@ -11,7 +11,8 @@ class PocketPaiseRepository(
     private val transactionDao: TransactionDao,
     private val budgetDao: BudgetDao,
     private val savingsGoalDao: SavingsGoalDao,
-    private val notificationDao: NotificationDao
+    private val notificationDao: NotificationDao,
+    private val deletedItemDao: com.vsdigitallabs.pocketpaise.stdbt.data.local.DeletedItemDao
 ) {
     // User functions
     suspend fun getUserByEmail(email: String): User? = userDao.getUserByEmail(email)
@@ -101,6 +102,9 @@ class PocketPaiseRepository(
 
     suspend fun deleteTransaction(transaction: Transaction) {
         transactionDao.deleteTransaction(transaction)
+        if (transaction.uuid.isNotEmpty() && transaction.isSynced) {
+            deletedItemDao.insert(com.vsdigitallabs.pocketpaise.stdbt.data.model.DeletedItem(uuid = transaction.uuid, type = "TRANSACTION"))
+        }
         
         // Re-adjust user balance
         val user = userDao.getUserByIdSync(transaction.userId)
@@ -136,8 +140,11 @@ class PocketPaiseRepository(
         return budgetDao.insertBudget(budget)
     }
     suspend fun updateBudget(budget: Budget) = budgetDao.updateBudget(budget)
-    suspend fun deleteBudgetById(id: Long) {
-        budgetDao.deleteBudgetById(id)
+    suspend fun deleteBudget(budget: Budget) {
+        budgetDao.deleteBudget(budget)
+        if (budget.uuid.isNotEmpty() && budget.isSynced) {
+            deletedItemDao.insert(com.vsdigitallabs.pocketpaise.stdbt.data.model.DeletedItem(uuid = budget.uuid, type = "BUDGET"))
+        }
     }
 
     // Savings Goals
@@ -162,8 +169,11 @@ class PocketPaiseRepository(
             )
         }
     }
-    suspend fun deleteGoalById(id: Long) {
-        savingsGoalDao.deleteGoalById(id)
+    suspend fun deleteSavingsGoal(goal: SavingsGoal) {
+        savingsGoalDao.deleteGoal(goal)
+        if (goal.uuid.isNotEmpty() && goal.isSynced) {
+            deletedItemDao.insert(com.vsdigitallabs.pocketpaise.stdbt.data.model.DeletedItem(uuid = goal.uuid, type = "GOAL"))
+        }
     }
 
     // Notifications

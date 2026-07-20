@@ -12,9 +12,10 @@ import com.vsdigitallabs.pocketpaise.stdbt.data.model.*
         Transaction::class,
         Budget::class,
         SavingsGoal::class,
-        Notification::class
+        Notification::class,
+        com.vsdigitallabs.pocketpaise.stdbt.data.model.DeletedItem::class
     ],
-    version = 4,
+    version = 5,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -23,6 +24,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun budgetDao(): BudgetDao
     abstract fun savingsGoalDao(): SavingsGoalDao
     abstract fun notificationDao(): NotificationDao
+    abstract fun deletedItemDao(): DeletedItemDao
 
     companion object {
         @Volatile

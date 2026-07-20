@@ -268,6 +268,7 @@ class PocketPaiseViewModel(
                     
                     editor.apply()
                 }
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -546,13 +547,26 @@ class PocketPaiseViewModel(
         }
     }
 
+    private fun enqueueSyncWorker() {
+        val syncWorkRequest = androidx.work.OneTimeWorkRequestBuilder<com.vsdigitallabs.pocketpaise.stdbt.worker.SyncWorker>().build()
+        androidx.work.WorkManager.getInstance(application).enqueue(syncWorkRequest)
+    }
+
     private fun fetchAndSyncData(localUserId: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
-                // Fetch from Firebase Realtime Database
-                val transactions = com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.getTransactions(localUserId)
-                val budgets = com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.getBudgets(localUserId)
-                val goals = com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.getGoals(localUserId)
+                // 1. Enqueue background SyncWorker for comprehensive sync
+                val syncWorkRequest = androidx.work.OneTimeWorkRequestBuilder<com.vsdigitallabs.pocketpaise.stdbt.worker.SyncWorker>().build()
+                androidx.work.WorkManager.getInstance(application).enqueue(syncWorkRequest)
+
+                // 2. Immediate fetch from API for UI responsiveness
+                val syncRes = com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.getSyncData()
+                if (syncRes.isSuccessful && syncRes.body()?.success == true) {
+                    val syncData = syncRes.body()?.data
+                    if (syncData != null) {
+                        val transactions = syncData.transactions.map { it.toTransaction(localUserId) }
+                        val budgets = syncData.budgets.map { it.toBudget(localUserId) }
+                        val goals = syncData.goals.map { it.toSavingsGoal(localUserId) }
                 
                 repository.syncData(localUserId, transactions, budgets, goals)
                         
@@ -597,6 +611,8 @@ class PocketPaiseViewModel(
                         if (updatedUser != null) {
                             repository.updateUser(updatedUser)
                         }
+                    } // End of if (syncData != null)
+                } // End of if (syncRes.isSuccessful)
                 
                 onSuccess()
             } catch (e: Exception) {
@@ -659,14 +675,14 @@ class PocketPaiseViewModel(
                 isSynced = true
             )
             repository.insertTransaction(tx)
-            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.saveTransaction(userId, tx)
+            enqueueSyncWorker()
         }
     }
 
     fun deleteTransaction(tx: Transaction) {
         viewModelScope.launch {
-            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.deleteTransaction(tx.userId, tx.uuid)
             repository.deleteTransaction(tx)
+            enqueueSyncWorker()
         }
     }
 
@@ -674,7 +690,7 @@ class PocketPaiseViewModel(
         viewModelScope.launch {
             val txToSave = newTx.copy(isSynced = true)
             repository.updateTransaction(oldTx, txToSave)
-            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.saveTransaction(txToSave.userId, txToSave)
+            enqueueSyncWorker()
         }
     }
 
@@ -703,7 +719,7 @@ class PocketPaiseViewModel(
                 isSynced = true
             )
             repository.insertBudget(b)
-            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.saveBudget(userId, b)
+            enqueueSyncWorker()
         }
     }
 
@@ -711,8 +727,8 @@ class PocketPaiseViewModel(
         viewModelScope.launch {
             val budget = repository.getBudgetByIdSync(id)
             if (budget != null) {
-                com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.deleteBudget(budget.userId, budget.uuid)
-                repository.deleteBudgetById(id)
+                repository.deleteBudget(budget)
+                enqueueSyncWorker()
             }
         }
     }
@@ -731,7 +747,7 @@ class PocketPaiseViewModel(
                 isSynced = true
             )
             repository.insertGoal(goal)
-            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.saveGoal(userId, goal)
+            enqueueSyncWorker()
         }
     }
 
@@ -759,7 +775,7 @@ class PocketPaiseViewModel(
                 isSynced = true
             )
             repository.updateGoal(updatedGoal)
-            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.saveGoal(user.id, updatedGoal)
+            enqueueSyncWorker()
             
             // Add a matching tracking transaction for transparency
             val tx = Transaction(
@@ -772,7 +788,7 @@ class PocketPaiseViewModel(
                 isSynced = true
             )
             repository.insertTransaction(tx)
-            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.saveTransaction(user.id, tx)
+            enqueueSyncWorker()
         }
     }
 
@@ -780,7 +796,7 @@ class PocketPaiseViewModel(
         viewModelScope.launch {
             val goalToSave = goal.copy(isSynced = true)
             repository.updateGoal(goalToSave)
-            com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.saveGoal(goalToSave.userId, goalToSave)
+            enqueueSyncWorker()
         }
     }
 
@@ -788,8 +804,8 @@ class PocketPaiseViewModel(
         viewModelScope.launch {
             val goal = repository.getGoalByIdSync(id)
             if (goal != null) {
-                com.vsdigitallabs.pocketpaise.stdbt.data.network.FirebaseSyncManager.deleteGoal(goal.userId, goal.uuid)
-                repository.deleteGoalById(id)
+                repository.deleteSavingsGoal(goal)
+                enqueueSyncWorker()
             }
         }
     }
@@ -871,7 +887,8 @@ class PocketPaiseViewModelFactory(private val application: Application) : ViewMo
                 transactionDao = database.transactionDao(),
                 budgetDao = database.budgetDao(),
                 savingsGoalDao = database.savingsGoalDao(),
-                notificationDao = database.notificationDao()
+                notificationDao = database.notificationDao(),
+                deletedItemDao = database.deletedItemDao()
             )
             @Suppress("UNCHECKED_CAST")
             return PocketPaiseViewModel(application, repository) as T
