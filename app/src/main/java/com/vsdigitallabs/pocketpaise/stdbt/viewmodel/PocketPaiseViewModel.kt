@@ -268,7 +268,6 @@ class PocketPaiseViewModel(
                     
                     editor.apply()
                 }
-                }
             } catch (e: Exception) {
                 e.printStackTrace()
             }
