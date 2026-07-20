@@ -548,7 +548,7 @@ class PocketPaiseViewModel(
 
     private fun enqueueSyncWorker() {
         val syncWorkRequest = androidx.work.OneTimeWorkRequestBuilder<com.vsdigitallabs.pocketpaise.stdbt.worker.SyncWorker>().build()
-        androidx.work.WorkManager.getInstance(application).enqueue(syncWorkRequest)
+        androidx.work.WorkManager.getInstance(getApplication()).enqueue(syncWorkRequest)
     }
 
     private fun fetchAndSyncData(localUserId: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
@@ -556,7 +556,7 @@ class PocketPaiseViewModel(
             try {
                 // 1. Enqueue background SyncWorker for comprehensive sync
                 val syncWorkRequest = androidx.work.OneTimeWorkRequestBuilder<com.vsdigitallabs.pocketpaise.stdbt.worker.SyncWorker>().build()
-                androidx.work.WorkManager.getInstance(application).enqueue(syncWorkRequest)
+                androidx.work.WorkManager.getInstance(getApplication()).enqueue(syncWorkRequest)
 
                 // 2. Immediate fetch from API for UI responsiveness
                 val syncRes = com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.getSyncData()
