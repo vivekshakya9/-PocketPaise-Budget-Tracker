@@ -33,6 +33,9 @@ interface BudgetDao {
     @Query("UPDATE budgets SET isSynced = 1 WHERE id IN (:ids)")
     suspend fun markAsSynced(ids: List<Long>)
 
+    @Query("UPDATE budgets SET isSynced = 1 WHERE uuid = :uuid")
+    suspend fun markSyncedByUuid(uuid: String)
+
     @Update
     suspend fun updateBudget(budget: Budget)
 

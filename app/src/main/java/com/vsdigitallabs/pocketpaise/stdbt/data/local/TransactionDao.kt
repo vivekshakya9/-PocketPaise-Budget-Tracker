@@ -39,6 +39,9 @@ interface TransactionDao {
     @Query("UPDATE transactions SET isSynced = 1 WHERE id IN (:ids)")
     suspend fun markAsSynced(ids: List<Long>)
 
+    @Query("UPDATE transactions SET isSynced = 1 WHERE uuid = :uuid")
+    suspend fun markSyncedByUuid(uuid: String)
+
     @Update
     suspend fun updateTransaction(transaction: Transaction)
 

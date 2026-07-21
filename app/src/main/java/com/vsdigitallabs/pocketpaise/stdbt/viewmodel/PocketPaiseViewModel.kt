@@ -661,27 +661,72 @@ class PocketPaiseViewModel(
     fun addTransaction(title: String, amount: Double, type: String, category: String, notes: String, receiptUri: String? = null) {
         viewModelScope.launch {
             val userId = _currentUserId.value ?: return@launch
-            
+            val uuid = java.util.UUID.randomUUID().toString()
+            val timestamp = System.currentTimeMillis()
+
             val tx = Transaction(
                 userId = userId,
                 title = title,
                 amount = amount,
                 type = type,
                 category = category,
-                timestamp = System.currentTimeMillis(),
+                timestamp = timestamp,
                 notes = notes,
                 receiptUri = receiptUri,
-                isSynced = true
+                uuid = uuid,
+                isSynced = false
             )
             repository.insertTransaction(tx)
-            enqueueSyncWorker()
+
+            // Immediately push to server
+            try {
+                val apiType = if (type == "INCOME") "income" else "expense"
+                val apiUrl = if (type == "INCOME") "income.php" else "expenses.php"
+                val dateStr = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(timestamp))
+                val body = mapOf<String, Any>(
+                    "uuid" to uuid,
+                    "title" to title,
+                    "amount" to amount,
+                    "category" to (category.ifEmpty { "General" }),
+                    "notes" to notes,
+                    "${apiType}_date" to dateStr
+                )
+                val response = if (type == "INCOME") {
+                    com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.createIncome(body)
+                } else {
+                    com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.createExpense(body)
+                }
+                if (response.isSuccessful) {
+                    // mark as synced in local db
+                    repository.markTransactionSyncedByUuid(uuid)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                // fallback to background sync
+                enqueueSyncWorker()
+            }
         }
     }
 
     fun deleteTransaction(tx: Transaction) {
         viewModelScope.launch {
             repository.deleteTransaction(tx)
-            enqueueSyncWorker()
+            // Immediately delete from server
+            try {
+                if (tx.serverId > 0) {
+                    if (tx.type == "INCOME") {
+                        com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteIncome(tx.serverId)
+                    } else {
+                        com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteExpense(tx.serverId)
+                    }
+                } else {
+                    // Try deleting by uuid via sync
+                    enqueueSyncWorker()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                enqueueSyncWorker()
+            }
         }
     }
 
@@ -709,16 +754,34 @@ class PocketPaiseViewModel(
     fun addBudget(category: String, limitAmount: Double, monthYear: String) {
         viewModelScope.launch {
             val userId = _currentUserId.value ?: return@launch
-            
+            val uuid = java.util.UUID.randomUUID().toString()
+
             val b = Budget(
                 userId = userId,
                 category = category,
                 limitAmount = limitAmount,
                 monthYear = monthYear,
-                isSynced = true
+                uuid = uuid,
+                isSynced = false
             )
             repository.insertBudget(b)
-            enqueueSyncWorker()
+
+            // Immediately push to server
+            try {
+                val body = mapOf<String, Any>(
+                    "uuid" to uuid,
+                    "category" to category,
+                    "limitAmount" to limitAmount,
+                    "monthYear" to monthYear
+                )
+                val response = com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.createBudget(body)
+                if (response.isSuccessful) {
+                    repository.markBudgetSyncedByUuid(uuid)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                enqueueSyncWorker()
+            }
         }
     }
 
@@ -727,7 +790,17 @@ class PocketPaiseViewModel(
             val budget = repository.getBudgetByIdSync(id)
             if (budget != null) {
                 repository.deleteBudget(budget)
-                enqueueSyncWorker()
+                // Immediately delete from server
+                try {
+                    if (budget.serverId > 0) {
+                        com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteBudget(budget.serverId)
+                    } else {
+                        enqueueSyncWorker()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    enqueueSyncWorker()
+                }
             }
         }
     }
@@ -736,17 +809,57 @@ class PocketPaiseViewModel(
     fun addGoal(name: String, targetAmount: Double, targetDate: Long) {
         viewModelScope.launch {
             val userId = _currentUserId.value ?: return@launch
-            
+            val uuid = java.util.UUID.randomUUID().toString()
+
             val goal = SavingsGoal(
                 userId = userId,
                 name = name,
                 targetAmount = targetAmount,
                 currentAmount = 0.0,
                 targetDate = targetDate,
-                isSynced = true
+                uuid = uuid,
+                isSynced = false
             )
             repository.insertGoal(goal)
-            enqueueSyncWorker()
+
+            // Immediately push to server
+            try {
+                val dateStr = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date(targetDate))
+                val body = mapOf<String, Any>(
+                    "uuid" to uuid,
+                    "name" to name,
+                    "targetAmount" to targetAmount,
+                    "currentAmount" to 0.0,
+                    "targetDate" to targetDate
+                )
+                val response = com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.createGoal(body)
+                if (response.isSuccessful) {
+                    repository.markGoalSyncedByUuid(uuid)
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                enqueueSyncWorker()
+            }
+        }
+    }
+
+    fun deleteGoal(id: Long) {
+        viewModelScope.launch {
+            val goal = repository.getGoalByIdSync(id)
+            if (goal != null) {
+                repository.deleteSavingsGoal(goal)
+                // Immediately delete from server
+                try {
+                    if (goal.serverId > 0) {
+                        com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteGoal(goal.serverId)
+                    } else {
+                        enqueueSyncWorker()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    enqueueSyncWorker()
+                }
+            }
         }
     }
 

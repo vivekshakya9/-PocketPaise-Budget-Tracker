@@ -30,6 +30,9 @@ interface SavingsGoalDao {
     @Query("UPDATE savings_goals SET isSynced = 1 WHERE id IN (:ids)")
     suspend fun markAsSynced(ids: List<Long>)
 
+    @Query("UPDATE savings_goals SET isSynced = 1 WHERE uuid = :uuid")
+    suspend fun markSyncedByUuid(uuid: String)
+
     @Update
     suspend fun updateGoal(goal: SavingsGoal)
 

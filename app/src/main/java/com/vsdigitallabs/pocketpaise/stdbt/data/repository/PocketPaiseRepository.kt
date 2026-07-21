@@ -184,4 +184,9 @@ class PocketPaiseRepository(
     suspend fun markAsRead(id: Long) = notificationDao.markAsRead(id)
     suspend fun deleteNotificationById(id: Long) = notificationDao.deleteNotificationById(id)
     suspend fun clearAllNotifications(userId: Long) = notificationDao.clearAllNotifications(userId)
+
+    // Mark as synced by UUID (used after direct API push)
+    suspend fun markTransactionSyncedByUuid(uuid: String) = transactionDao.markSyncedByUuid(uuid)
+    suspend fun markBudgetSyncedByUuid(uuid: String) = budgetDao.markSyncedByUuid(uuid)
+    suspend fun markGoalSyncedByUuid(uuid: String) = savingsGoalDao.markSyncedByUuid(uuid)
 }
