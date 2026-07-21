@@ -931,15 +931,6 @@ class PocketPaiseViewModel(
         }
     }
 
-    fun deleteGoal(id: Long) {
-        viewModelScope.launch {
-            val goal = repository.getGoalByIdSync(id)
-            if (goal != null) {
-                repository.deleteSavingsGoal(goal)
-                enqueueSyncWorker()
-            }
-        }
-    }
 
     // --- Notification Center Actions ---
     fun markAllNotificationsRead() {
