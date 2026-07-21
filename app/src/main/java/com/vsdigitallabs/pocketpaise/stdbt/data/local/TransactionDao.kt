@@ -33,8 +33,8 @@ interface TransactionDao {
     @Query("DELETE FROM transactions WHERE userId = :userId AND isSynced = 1")
     suspend fun deleteAllSyncedForUser(userId: Long)
 
-    @Query("SELECT * FROM transactions WHERE isSynced = 0")
-    suspend fun getUnsyncedTransactions(): List<Transaction>
+    @Query("SELECT * FROM transactions WHERE isSynced = 0 AND userId = :userId")
+    suspend fun getUnsyncedTransactions(userId: Long): List<Transaction>
 
     @Query("UPDATE transactions SET isSynced = 1 WHERE id IN (:ids)")
     suspend fun markAsSynced(ids: List<Long>)

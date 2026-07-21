@@ -27,8 +27,8 @@ interface BudgetDao {
     @Query("DELETE FROM budgets WHERE userId = :userId AND isSynced = 1")
     suspend fun deleteAllSyncedForUser(userId: Long)
 
-    @Query("SELECT * FROM budgets WHERE isSynced = 0")
-    suspend fun getUnsyncedBudgets(): List<Budget>
+    @Query("SELECT * FROM budgets WHERE isSynced = 0 AND userId = :userId")
+    suspend fun getUnsyncedBudgets(userId: Long): List<Budget>
 
     @Query("UPDATE budgets SET isSynced = 1 WHERE id IN (:ids)")
     suspend fun markAsSynced(ids: List<Long>)

@@ -31,9 +31,9 @@ class SyncWorker(appContext: Context, workerParams: WorkerParameters) : Coroutin
 
         try {
             // 1. Gather all unsynced local data
-            val unsyncedTransactions = transactionDao.getUnsyncedTransactions()
-            val unsyncedBudgets = budgetDao.getUnsyncedBudgets()
-            val unsyncedGoals = savingsGoalDao.getUnsyncedGoals()
+            val unsyncedTransactions = transactionDao.getUnsyncedTransactions(userId)
+            val unsyncedBudgets = budgetDao.getUnsyncedBudgets(userId)
+            val unsyncedGoals = savingsGoalDao.getUnsyncedGoals(userId)
 
             val deletedItems = deletedItemDao.getAllDeletedItems()
             val deletedTransactions = deletedItems.filter { it.type == "TRANSACTION" }.map { it.uuid }
