@@ -709,7 +709,6 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                     }
                 }
             }
-            }
 
             Spacer(modifier = Modifier.height(24.dp))
             // AdMob Banner at the bottom of Dashboard Screen
