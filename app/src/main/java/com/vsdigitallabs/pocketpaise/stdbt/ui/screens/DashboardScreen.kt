@@ -757,7 +757,6 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                 }
             )
         }
-        }
     }
 }
 
