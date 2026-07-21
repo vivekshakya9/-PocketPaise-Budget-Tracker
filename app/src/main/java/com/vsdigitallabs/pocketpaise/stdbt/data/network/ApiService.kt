@@ -44,6 +44,9 @@ interface ApiService {
 
     @DELETE("expenses.php")
     suspend fun deleteExpense(@Query("id") id: Long): Response<ApiResponse<Any>>
+
+    @DELETE("expenses.php")
+    suspend fun deleteExpenseByUuid(@Query("uuid") uuid: String): Response<ApiResponse<Any>>
     
     // Incomes
     @GET("income.php")
@@ -54,6 +57,9 @@ interface ApiService {
 
     @DELETE("income.php")
     suspend fun deleteIncome(@Query("id") id: Long): Response<ApiResponse<Any>>
+
+    @DELETE("income.php")
+    suspend fun deleteIncomeByUuid(@Query("uuid") uuid: String): Response<ApiResponse<Any>>
     
     // Budgets
     @GET("budgets.php")
@@ -64,6 +70,9 @@ interface ApiService {
 
     @DELETE("budgets.php")
     suspend fun deleteBudget(@Query("id") id: Long): Response<ApiResponse<Any>>
+
+    @DELETE("budgets.php")
+    suspend fun deleteBudgetByUuid(@Query("uuid") uuid: String): Response<ApiResponse<Any>>
 
     // Goals
     @GET("goals.php")
@@ -84,6 +93,9 @@ interface ApiService {
 
     @DELETE("goals.php")
     suspend fun deleteGoal(@Query("id") id: Long): Response<ApiResponse<Any>>
+
+    @DELETE("goals.php")
+    suspend fun deleteGoalByUuid(@Query("uuid") uuid: String): Response<ApiResponse<Any>>
 
     // App Config (AdMob etc)
     @GET("config.php")

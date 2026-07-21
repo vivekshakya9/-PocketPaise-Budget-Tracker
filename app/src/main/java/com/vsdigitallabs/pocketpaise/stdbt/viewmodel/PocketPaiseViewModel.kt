@@ -738,8 +738,13 @@ class PocketPaiseViewModel(
                     } else {
                         com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteExpense(tx.serverId)
                     }
+                } else if (tx.uuid.isNotEmpty()) {
+                    if (tx.type == "INCOME") {
+                        com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteIncomeByUuid(tx.uuid)
+                    } else {
+                        com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteExpenseByUuid(tx.uuid)
+                    }
                 } else {
-                    // Try deleting by uuid via sync
                     enqueueSyncWorker()
                 }
             } catch (e: Exception) {
@@ -813,6 +818,8 @@ class PocketPaiseViewModel(
                 try {
                     if (budget.serverId > 0) {
                         com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteBudget(budget.serverId)
+                    } else if (budget.uuid.isNotEmpty()) {
+                        com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteBudgetByUuid(budget.uuid)
                     } else {
                         enqueueSyncWorker()
                     }
@@ -871,6 +878,8 @@ class PocketPaiseViewModel(
                 try {
                     if (goal.serverId > 0) {
                         com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteGoal(goal.serverId)
+                    } else if (goal.uuid.isNotEmpty()) {
+                        com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.deleteGoalByUuid(goal.uuid)
                     } else {
                         enqueueSyncWorker()
                     }
