@@ -148,7 +148,8 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                                             text = unreadNotificationsCount.toString(),
                                             color = MaterialTheme.colorScheme.onError,
                                             fontSize = 8.sp,
-                                            fontWeight = FontWeight.Bold
+                                            fontWeight = FontWeight.Bold,
+                                            modifier = Modifier.offset(y = (-1).dp)
                                         )
                                     }
                                 }

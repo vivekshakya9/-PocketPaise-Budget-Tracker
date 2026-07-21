@@ -586,10 +586,11 @@ class PocketPaiseViewModel(
                         val budgets = syncData.budgets.map { it.toBudget(localUserId) }
                         val goals = syncData.goals.map { it.toSavingsGoal(localUserId) }
                 
-                repository.syncData(localUserId, transactions, budgets, goals)
+                        repository.syncData(localUserId, transactions, budgets, goals)
                         
-                        // Calculate total balances correctly after sync
-                        val balance = transactions.fold(0.0) { acc, tx ->
+                        // Calculate total balances correctly after sync from all local transactions
+                        val allTxs = repository.getAllTransactions(localUserId).firstOrNull() ?: emptyList()
+                        val balance = allTxs.fold(0.0) { acc, tx ->
                             if (tx.type == "INCOME") acc + tx.amount else acc - tx.amount
                         }
                         
