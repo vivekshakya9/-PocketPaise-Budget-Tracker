@@ -102,7 +102,7 @@ class PocketPaiseRepository(
 
     suspend fun deleteTransaction(transaction: Transaction) {
         transactionDao.deleteTransaction(transaction)
-        if (transaction.uuid.isNotEmpty() && transaction.isSynced) {
+        if (transaction.uuid.isNotEmpty()) {
             deletedItemDao.insert(com.vsdigitallabs.pocketpaise.stdbt.data.model.DeletedItem(uuid = transaction.uuid, type = "TRANSACTION"))
         }
         
@@ -142,7 +142,7 @@ class PocketPaiseRepository(
     suspend fun updateBudget(budget: Budget) = budgetDao.updateBudget(budget)
     suspend fun deleteBudget(budget: Budget) {
         budgetDao.deleteBudget(budget)
-        if (budget.uuid.isNotEmpty() && budget.isSynced) {
+        if (budget.uuid.isNotEmpty()) {
             deletedItemDao.insert(com.vsdigitallabs.pocketpaise.stdbt.data.model.DeletedItem(uuid = budget.uuid, type = "BUDGET"))
         }
     }
@@ -171,7 +171,7 @@ class PocketPaiseRepository(
     }
     suspend fun deleteSavingsGoal(goal: SavingsGoal) {
         savingsGoalDao.deleteGoal(goal)
-        if (goal.uuid.isNotEmpty() && goal.isSynced) {
+        if (goal.uuid.isNotEmpty()) {
             deletedItemDao.insert(com.vsdigitallabs.pocketpaise.stdbt.data.model.DeletedItem(uuid = goal.uuid, type = "GOAL"))
         }
     }
