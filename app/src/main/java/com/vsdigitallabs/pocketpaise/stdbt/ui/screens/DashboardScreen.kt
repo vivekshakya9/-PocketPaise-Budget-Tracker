@@ -709,6 +709,14 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                     }
                 }
             }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+            // AdMob Banner at the bottom of Dashboard Screen
+            AdMobBanner(
+                bannerEnabled = bannerEnabled,
+                bannerUnitId = bannerUnitId
+            )
 
             Spacer(modifier = Modifier.height(80.dp)) // Extra space for FAB and bottom navigation
         }
@@ -750,12 +758,7 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                 }
             )
         }
-
-        // AdMob Banner at the bottom of Dashboard Screen
-        AdMobBanner(
-            bannerEnabled = bannerEnabled,
-            bannerUnitId = bannerUnitId
-        )
+        }
     }
 }
 
