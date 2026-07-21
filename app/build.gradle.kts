@@ -101,6 +101,7 @@ dependencies {
   implementation(libs.androidx.lifecycle.runtime.ktx)
   implementation(libs.androidx.lifecycle.viewmodel.compose)
   implementation(libs.androidx.navigation.compose)
+  implementation("androidx.lifecycle:lifecycle-process:2.8.3")
     
   // Biometric Authentication
   implementation("androidx.biometric:biometric:1.1.0")

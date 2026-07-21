@@ -45,6 +45,7 @@ import java.util.*
 
 @Composable
 fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewModel) {
+    val context = androidx.compose.ui.platform.LocalContext.current
     val currentUser by viewModel.currentUser.collectAsState()
     val transactions by viewModel.allTransactions.collectAsState()
     val budgets by viewModel.currentBudgets.collectAsState()
