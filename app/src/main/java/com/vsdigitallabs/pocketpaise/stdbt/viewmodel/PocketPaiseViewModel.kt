@@ -136,6 +136,13 @@ class PocketPaiseViewModel(
     private val _dateFormat = MutableStateFlow("dd MMM yyyy")
     val dateFormat: StateFlow<String> = _dateFormat.asStateFlow()
 
+    // AdMob States - reactive so banner shows immediately after config load
+    private val _bannerEnabled = MutableStateFlow(prefs.getBoolean("banner_enabled", false))
+    val bannerEnabled: StateFlow<Boolean> = _bannerEnabled.asStateFlow()
+
+    private val _bannerUnitId = MutableStateFlow(prefs.getString("banner_unit_id", "ca-app-pub-3940256099942544/6300978111") ?: "ca-app-pub-3940256099942544/6300978111")
+    val bannerUnitId: StateFlow<String> = _bannerUnitId.asStateFlow()
+
     init {
         // Initialize month/year
         val cal = Calendar.getInstance()
@@ -261,9 +268,21 @@ class PocketPaiseViewModel(
                     
                     val admobMap = config["admob"] as? Map<*, *>
                     if (admobMap != null) {
-                        editor.putBoolean("admob_test_mode", (admobMap["test_mode"] as? Number)?.toInt() == 1)
-                        editor.putBoolean("banner_enabled", (admobMap["banner_enabled"] as? Number)?.toInt() == 1)
-                        editor.putString("banner_unit_id", admobMap["banner_unit_id"] as? String ?: "")
+                        val testMode = (admobMap["test_mode"] as? Number)?.toInt() == 1
+                        val bannerOn = (admobMap["banner_enabled"] as? Number)?.toInt() == 1
+                        val rawUnitId = admobMap["banner_unit_id"] as? String ?: ""
+                        // In test mode always use Google's test banner ID
+                        val finalUnitId = if (testMode || rawUnitId.isEmpty()) {
+                            "ca-app-pub-3940256099942544/6300978111"
+                        } else {
+                            rawUnitId
+                        }
+                        editor.putBoolean("admob_test_mode", testMode)
+                        editor.putBoolean("banner_enabled", bannerOn)
+                        editor.putString("banner_unit_id", finalUnitId)
+                        // Update reactive StateFlows so the ad banner recomposes
+                        _bannerEnabled.value = bannerOn
+                        _bannerUnitId.value = finalUnitId
                     }
                     
                     editor.apply()

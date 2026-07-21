@@ -51,6 +51,8 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
     val goals by viewModel.savingsGoals.collectAsState()
     val unreadNotificationsCount by viewModel.unreadNotificationsCount.collectAsState()
     val currencySymbol by viewModel.selectedCurrency.collectAsState()
+    val bannerEnabled by viewModel.bannerEnabled.collectAsState()
+    val bannerUnitId by viewModel.bannerUnitId.collectAsState()
 
     // Dialog trigger states
     var showAddExpenseDialog by remember { mutableStateOf(false) }
@@ -750,8 +752,10 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
         }
 
         // AdMob Banner at the bottom of Dashboard Screen
-        val context = androidx.compose.ui.platform.LocalContext.current
-        AdMobBanner(context = context)
+        AdMobBanner(
+            bannerEnabled = bannerEnabled,
+            bannerUnitId = bannerUnitId
+        )
     }
 }
 

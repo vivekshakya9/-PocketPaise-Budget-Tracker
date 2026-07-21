@@ -1,6 +1,5 @@
 package com.vsdigitallabs.pocketpaise.stdbt.ui.components
 
-import android.content.Context
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -10,26 +9,34 @@ import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 
 @Composable
-fun AdMobBanner(context: Context, modifier: Modifier = Modifier) {
-    val prefs = context.getSharedPreferences("PocketPaisePrefs", Context.MODE_PRIVATE)
-    val bannerEnabled = prefs.getBoolean("banner_enabled", false)
-    val testMode = prefs.getBoolean("admob_test_mode", true)
-    
-    var unitId = prefs.getString("banner_unit_id", "") ?: ""
-    if (unitId.isEmpty()) {
-        unitId = "ca-app-pub-3940256099942544/6300978111" // Google Test Banner ID
+fun AdMobBanner(
+    bannerEnabled: Boolean,
+    bannerUnitId: String,
+    modifier: Modifier = Modifier
+) {
+    if (!bannerEnabled) return
+
+    val finalUnitId = if (bannerUnitId.isBlank()) {
+        "ca-app-pub-3940256099942544/6300978111" // Google test banner ID fallback
+    } else {
+        bannerUnitId
     }
 
-    if (bannerEnabled) {
-        AndroidView(
-            modifier = modifier.fillMaxWidth(),
-            factory = { ctx ->
-                AdView(ctx).apply {
-                    setAdSize(AdSize.BANNER)
-                    adUnitId = unitId
-                    loadAd(AdRequest.Builder().build())
-                }
+    AndroidView(
+        modifier = modifier.fillMaxWidth(),
+        factory = { ctx ->
+            AdView(ctx).apply {
+                setAdSize(AdSize.BANNER)
+                adUnitId = finalUnitId
+                loadAd(AdRequest.Builder().build())
             }
-        )
-    }
+        },
+        update = { adView ->
+            // If unit ID changed, reload the ad
+            if (adView.adUnitId != finalUnitId) {
+                adView.adUnitId = finalUnitId
+                adView.loadAd(AdRequest.Builder().build())
+            }
+        }
+    )
 }
