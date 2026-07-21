@@ -43,6 +43,8 @@ class MainActivity : FragmentActivity() {
         FirebaseApp.initializeApp(this)
         FirebaseMessaging.getInstance().subscribeToTopic("global")
         MobileAds.initialize(this) {}
+        com.vsdigitallabs.pocketpaise.stdbt.utils.AppOpenAdManager(application)
+        com.vsdigitallabs.pocketpaise.stdbt.utils.InterstitialAdManager.loadAd(this)
         enableEdgeToEdge()
 
         // Enqueue Daily Budget Alert Worker

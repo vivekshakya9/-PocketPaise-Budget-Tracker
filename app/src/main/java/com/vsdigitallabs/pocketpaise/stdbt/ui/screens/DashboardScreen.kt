@@ -736,6 +736,7 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                         notes = notes
                     )
                     showAddExpenseDialog = false
+                    com.vsdigitallabs.pocketpaise.stdbt.utils.InterstitialAdManager.showAd(context as android.app.Activity) {}
                 }
             )
         }
@@ -755,6 +756,7 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                         notes = notes
                     )
                     showAddIncomeDialog = false
+                    com.vsdigitallabs.pocketpaise.stdbt.utils.InterstitialAdManager.showAd(context as android.app.Activity) {}
                 }
             )
         }

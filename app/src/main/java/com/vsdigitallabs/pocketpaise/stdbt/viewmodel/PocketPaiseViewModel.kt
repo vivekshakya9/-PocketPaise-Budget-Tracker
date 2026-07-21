@@ -271,15 +271,33 @@ class PocketPaiseViewModel(
                         val testMode = (admobMap["test_mode"] as? Number)?.toInt() == 1
                         val bannerOn = (admobMap["banner_enabled"] as? Number)?.toInt() == 1
                         val rawUnitId = admobMap["banner_unit_id"] as? String ?: ""
-                        // In test mode always use Google's test banner ID
+                        
+                        val interstitialOn = (admobMap["interstitial_enabled"] as? Number)?.toInt() == 1
+                        val rawInterstitialUnitId = admobMap["interstitial_unit_id"] as? String ?: ""
+                        
+                        val appOpenOn = (admobMap["app_open_enabled"] as? Number)?.toInt() == 1
+                        val rawAppOpenUnitId = admobMap["app_open_unit_id"] as? String ?: ""
+
+                        // In test mode always use Google's test IDs
                         val finalUnitId = if (testMode || rawUnitId.isEmpty()) {
                             "ca-app-pub-3940256099942544/6300978111"
-                        } else {
-                            rawUnitId
-                        }
+                        } else rawUnitId
+                        
+                        val finalInterstitialUnitId = if (testMode || rawInterstitialUnitId.isEmpty()) {
+                            "ca-app-pub-3940256099942544/1033173712"
+                        } else rawInterstitialUnitId
+                        
+                        val finalAppOpenUnitId = if (testMode || rawAppOpenUnitId.isEmpty()) {
+                            "ca-app-pub-3940256099942544/9257395921"
+                        } else rawAppOpenUnitId
+
                         editor.putBoolean("admob_test_mode", testMode)
                         editor.putBoolean("banner_enabled", bannerOn)
                         editor.putString("banner_unit_id", finalUnitId)
+                        editor.putBoolean("interstitial_enabled", interstitialOn)
+                        editor.putString("interstitial_unit_id", finalInterstitialUnitId)
+                        editor.putBoolean("app_open_enabled", appOpenOn)
+                        editor.putString("app_open_unit_id", finalAppOpenUnitId)
                         // Update reactive StateFlows so the ad banner recomposes
                         _bannerEnabled.value = bannerOn
                         _bannerUnitId.value = finalUnitId
