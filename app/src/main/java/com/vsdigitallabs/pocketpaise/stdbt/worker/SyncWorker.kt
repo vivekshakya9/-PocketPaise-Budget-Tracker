@@ -90,15 +90,31 @@ class SyncWorker(appContext: Context, workerParams: WorkerParameters) : Coroutin
             if (pullResponse.isSuccessful && pullResponse.body()?.success == true) {
                 val syncData = pullResponse.body()?.data
                 if (syncData != null) {
+                    val incomingTransactions = syncData.transactions.map { it.toTransaction(userId) }
+                    val incomingBudgets = syncData.budgets.map { it.toBudget(userId) }
+                    val incomingGoals = syncData.goals.map { it.toSavingsGoal(userId) }
+
                     // Update local DB
                     transactionDao.deleteAllSyncedForUser(userId)
-                    transactionDao.insertAll(syncData.transactions.map { it.toTransaction(userId) })
+                    val incomingTxUuids = incomingTransactions.map { it.uuid }
+                    if (incomingTxUuids.isNotEmpty()) {
+                        transactionDao.deleteByUuids(incomingTxUuids)
+                    }
+                    transactionDao.insertAll(incomingTransactions)
 
                     budgetDao.deleteAllSyncedForUser(userId)
-                    budgetDao.insertAll(syncData.budgets.map { it.toBudget(userId) })
+                    val incomingBudgetUuids = incomingBudgets.map { it.uuid }
+                    if (incomingBudgetUuids.isNotEmpty()) {
+                        budgetDao.deleteByUuids(incomingBudgetUuids)
+                    }
+                    budgetDao.insertAll(incomingBudgets)
 
                     savingsGoalDao.deleteAllSyncedForUser(userId)
-                    savingsGoalDao.insertAll(syncData.goals.map { it.toSavingsGoal(userId) })
+                    val incomingGoalUuids = incomingGoals.map { it.uuid }
+                    if (incomingGoalUuids.isNotEmpty()) {
+                        savingsGoalDao.deleteByUuids(incomingGoalUuids)
+                    }
+                    savingsGoalDao.insertAll(incomingGoals)
                 }
             } else {
                 return@withContext Result.retry()

@@ -24,12 +24,24 @@ class PocketPaiseRepository(
     // Sync functions
     suspend fun syncData(userId: Long, transactions: List<Transaction>, budgets: List<Budget>, goals: List<SavingsGoal>) {
         transactionDao.deleteAllSyncedForUser(userId)
+        val incomingTxUuids = transactions.map { it.uuid }
+        if (incomingTxUuids.isNotEmpty()) {
+            transactionDao.deleteByUuids(incomingTxUuids)
+        }
         transactionDao.insertAll(transactions)
         
         budgetDao.deleteAllSyncedForUser(userId)
+        val incomingBudgetUuids = budgets.map { it.uuid }
+        if (incomingBudgetUuids.isNotEmpty()) {
+            budgetDao.deleteByUuids(incomingBudgetUuids)
+        }
         budgetDao.insertAll(budgets)
         
         savingsGoalDao.deleteAllSyncedForUser(userId)
+        val incomingGoalUuids = goals.map { it.uuid }
+        if (incomingGoalUuids.isNotEmpty()) {
+            savingsGoalDao.deleteByUuids(incomingGoalUuids)
+        }
         savingsGoalDao.insertAll(goals)
     }
 

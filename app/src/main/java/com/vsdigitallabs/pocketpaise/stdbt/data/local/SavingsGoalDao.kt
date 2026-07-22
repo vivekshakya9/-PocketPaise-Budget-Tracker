@@ -24,6 +24,9 @@ interface SavingsGoalDao {
     @Query("DELETE FROM savings_goals WHERE userId = :userId AND isSynced = 1")
     suspend fun deleteAllSyncedForUser(userId: Long)
 
+    @Query("DELETE FROM savings_goals WHERE uuid IN (:uuids)")
+    suspend fun deleteByUuids(uuids: List<String>)
+
     @Query("SELECT * FROM savings_goals WHERE isSynced = 0 AND userId = :userId")
     suspend fun getUnsyncedGoals(userId: Long): List<SavingsGoal>
 

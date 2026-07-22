@@ -27,6 +27,9 @@ interface BudgetDao {
     @Query("DELETE FROM budgets WHERE userId = :userId AND isSynced = 1")
     suspend fun deleteAllSyncedForUser(userId: Long)
 
+    @Query("DELETE FROM budgets WHERE uuid IN (:uuids)")
+    suspend fun deleteByUuids(uuids: List<String>)
+
     @Query("SELECT * FROM budgets WHERE isSynced = 0 AND userId = :userId")
     suspend fun getUnsyncedBudgets(userId: Long): List<Budget>
 
