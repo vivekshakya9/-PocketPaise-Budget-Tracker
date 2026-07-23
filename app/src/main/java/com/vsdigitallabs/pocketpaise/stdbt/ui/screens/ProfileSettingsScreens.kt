@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -481,6 +482,7 @@ fun SettingsScreen(navController: NavController, viewModel: PocketPaiseViewModel
     val reminderTime by viewModel.reminderTime.collectAsState()
     val dateFormat by viewModel.dateFormat.collectAsState()
     val context = LocalContext.current
+    val uriHandler = LocalUriHandler.current
 
     var showCurrencyDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
