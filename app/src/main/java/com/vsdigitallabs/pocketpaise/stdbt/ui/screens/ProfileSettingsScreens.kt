@@ -667,7 +667,7 @@ fun SettingsScreen(navController: NavController, viewModel: PocketPaiseViewModel
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { navController.navigate(Screen.Contact.route) },
+                            .clickable { uriHandler.openUri("https://pocketpaise.universitytak.in/backend/contact.php") },
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -685,7 +685,7 @@ fun SettingsScreen(navController: NavController, viewModel: PocketPaiseViewModel
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { navController.navigate(Screen.About.route) },
+                            .clickable { uriHandler.openUri("https://pocketpaise.universitytak.in/backend/about.php") },
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -703,7 +703,7 @@ fun SettingsScreen(navController: NavController, viewModel: PocketPaiseViewModel
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { navController.navigate(Screen.PrivacyPolicy.route) },
+                            .clickable { uriHandler.openUri("https://pocketpaise.universitytak.in/backend/privacy.php") },
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -721,7 +721,7 @@ fun SettingsScreen(navController: NavController, viewModel: PocketPaiseViewModel
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .clickable { navController.navigate(Screen.Terms.route) },
+                            .clickable { uriHandler.openUri("https://pocketpaise.universitytak.in/backend/terms.php") },
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {

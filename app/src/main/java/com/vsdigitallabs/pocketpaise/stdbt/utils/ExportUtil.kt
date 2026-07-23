@@ -48,49 +48,109 @@ object ExportUtil {
 
     fun exportToPdf(context: Context, transactions: List<Transaction>, totalIncome: Double, totalExpense: Double) {
         val pdfDocument = PdfDocument()
-        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create()
-        val page = pdfDocument.startPage(pageInfo)
-        val canvas: Canvas = page.canvas
+        val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 size
+        var page = pdfDocument.startPage(pageInfo)
+        var canvas = page.canvas
         val paint = Paint()
 
-        // Title
-        paint.textSize = 24f
-        paint.color = Color.BLACK
-        paint.isFakeBoldText = true
-        canvas.drawText("PocketPaise Financial Report", 40f, 60f, paint)
+        val primaryColor = Color.parseColor("#4f46e5")
+        val greenColor = Color.parseColor("#10b981")
+        val redColor = Color.parseColor("#ef4444")
+        val lightGray = Color.parseColor("#f3f4f6")
+        
+        fun drawHeaderAndSummary() {
+            // Header Background
+            paint.color = primaryColor
+            canvas.drawRect(0f, 0f, 595f, 100f, paint)
 
-        // Summary
-        paint.textSize = 16f
-        paint.isFakeBoldText = false
-        canvas.drawText("Total Income: ₹$totalIncome", 40f, 100f, paint)
-        canvas.drawText("Total Expense: ₹$totalExpense", 40f, 125f, paint)
-        canvas.drawText("Net Balance: ₹${totalIncome - totalExpense}", 40f, 150f, paint)
+            // Title
+            paint.color = Color.WHITE
+            paint.textSize = 28f
+            paint.isFakeBoldText = true
+            paint.textAlign = Paint.Align.CENTER
+            canvas.drawText("PocketPaise Financial Report", 595f / 2, 60f, paint)
 
-        // Headers
-        paint.isFakeBoldText = true
-        var yPos = 200f
-        canvas.drawText("Date", 40f, yPos, paint)
-        canvas.drawText("Title", 160f, yPos, paint)
-        canvas.drawText("Type", 320f, yPos, paint)
-        canvas.drawText("Amount", 440f, yPos, paint)
+            // Summary Info
+            paint.textAlign = Paint.Align.LEFT
+            paint.textSize = 14f
+            paint.color = Color.BLACK
+            
+            val generatedOn = "Generated: ${SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault()).format(Date())}"
+            canvas.drawText(generatedOn, 40f, 140f, paint)
 
-        // List
+            // Income / Expense / Balance Summary
+            paint.textSize = 16f
+            paint.isFakeBoldText = true
+            
+            paint.color = greenColor
+            canvas.drawText("Total Income: ₹$totalIncome", 40f, 180f, paint)
+            
+            paint.color = redColor
+            canvas.drawText("Total Expense: ₹$totalExpense", 250f, 180f, paint)
+            
+            val net = totalIncome - totalExpense
+            paint.color = if (net >= 0) primaryColor else redColor
+            canvas.drawText("Net Balance: ₹$net", 450f, 180f, paint)
+        }
+
+        fun drawTableHeader(yPos: Float) {
+            paint.color = primaryColor
+            canvas.drawRect(40f, yPos - 20f, 555f, yPos + 10f, paint)
+            
+            paint.color = Color.WHITE
+            paint.textSize = 14f
+            paint.isFakeBoldText = true
+            canvas.drawText("Date", 50f, yPos, paint)
+            canvas.drawText("Title", 150f, yPos, paint)
+            canvas.drawText("Category", 300f, yPos, paint)
+            canvas.drawText("Type", 420f, yPos, paint)
+            canvas.drawText("Amount", 490f, yPos, paint)
+        }
+
+        drawHeaderAndSummary()
+        var yPos = 240f
+        drawTableHeader(yPos)
+        
+        yPos += 30f
         paint.isFakeBoldText = false
         paint.textSize = 12f
-        yPos += 30f
-        
-        transactions.forEach { tx ->
+        var isAltRow = false
+
+        for (tx in transactions) {
             if (yPos > 800f) {
-                // To keep it simple, we don't paginate yet, just cut off or implement pagination
-                // Here we just stop drawing if it exceeds a page for simplicity.
-                return@forEach
+                pdfDocument.finishPage(page)
+                page = pdfDocument.startPage(pageInfo)
+                canvas = page.canvas
+                yPos = 50f
+                drawTableHeader(yPos)
+                yPos += 30f
+                paint.isFakeBoldText = false
+                paint.textSize = 12f
             }
-            canvas.drawText(getFormattedDate(tx.timestamp).substring(0, 11), 40f, yPos, paint)
-            val shortTitle = if (tx.title.length > 15) tx.title.substring(0, 15) + ".." else tx.title
-            canvas.drawText(shortTitle, 160f, yPos, paint)
-            canvas.drawText(tx.type, 320f, yPos, paint)
-            canvas.drawText("₹${tx.amount}", 440f, yPos, paint)
-            yPos += 25f
+
+            // Draw alternating row background
+            if (isAltRow) {
+                paint.color = lightGray
+                canvas.drawRect(40f, yPos - 15f, 555f, yPos + 5f, paint)
+            }
+            
+            paint.color = Color.BLACK
+            val dateStr = getFormattedDate(tx.timestamp).substring(0, 11)
+            val titleStr = if (tx.title.length > 18) tx.title.substring(0, 18) + ".." else tx.title
+            val catStr = if (tx.category.length > 15) tx.category.substring(0, 15) + ".." else tx.category
+            
+            canvas.drawText(dateStr, 50f, yPos, paint)
+            canvas.drawText(titleStr, 150f, yPos, paint)
+            canvas.drawText(catStr, 300f, yPos, paint)
+            
+            paint.color = if (tx.type == "INCOME") greenColor else redColor
+            paint.isFakeBoldText = true
+            canvas.drawText(tx.type, 420f, yPos, paint)
+            canvas.drawText("₹${tx.amount}", 490f, yPos, paint)
+            
+            paint.isFakeBoldText = false
+            yPos += 20f
+            isAltRow = !isAltRow
         }
 
         pdfDocument.finishPage(page)

@@ -262,8 +262,14 @@ class PocketPaiseViewModel(
                         editor.putBoolean("maintenance_mode", (appMap["maintenance_mode"] as? Number)?.toInt() == 1)
                         editor.putString("maintenance_message", appMap["maintenance_message"] as? String ?: "")
                         editor.putString("daily_reminder_message", appMap["daily_reminder_message"] as? String ?: "")
-                        editor.putString("daily_reminder_time", appMap["daily_reminder_time"] as? String ?: "")
+                        val newReminderTime = appMap["daily_reminder_time"] as? String ?: ""
+                        editor.putString("daily_reminder_time", newReminderTime)
                         editor.putString("support_email", appMap["support_email"] as? String ?: "")
+                        
+                        // Reschedule alarm if time is provided
+                        if (newReminderTime.isNotEmpty() && context != null) {
+                            setReminderTime(context!!, newReminderTime)
+                        }
                     }
                     
                     val admobMap = config["admob"] as? Map<*, *>
@@ -810,6 +816,13 @@ class PocketPaiseViewModel(
 
     fun setTypeFilter(type: String?) {
         _selectedTypeFilter.value = type
+    }
+
+    // We need a Context reference to set the alarm from fetchRemoteConfig
+    private var context: android.content.Context? = null
+    
+    fun initContext(ctx: android.content.Context) {
+        context = ctx.applicationContext
     }
 
     // --- Budget Actions ---

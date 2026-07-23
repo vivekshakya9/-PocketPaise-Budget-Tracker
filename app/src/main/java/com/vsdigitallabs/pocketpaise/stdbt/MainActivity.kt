@@ -60,6 +60,7 @@ class MainActivity : FragmentActivity() {
             val viewModel: PocketPaiseViewModel = viewModel(
                 factory = PocketPaiseViewModelFactory(application)
             )
+            viewModel.initContext(this)
             val isDarkMode by viewModel.isDarkMode.collectAsState()
             
             val prefs = getSharedPreferences("PocketPaisePrefs", android.content.Context.MODE_PRIVATE)
