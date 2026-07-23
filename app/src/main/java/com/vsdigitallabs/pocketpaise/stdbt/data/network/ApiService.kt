@@ -28,6 +28,15 @@ interface ApiService {
     @POST("auth.php?action=register")
     suspend fun register(@Body body: Map<String, String>): Response<ApiResponse<AuthResponse>>
     
+    @POST("forgot_password.php")
+    suspend fun forgotPassword(@Body body: Map<String, String>): Response<ApiResponse<Any>>
+
+    @POST("change_password.php")
+    suspend fun changePassword(@Body body: Map<String, String>): Response<ApiResponse<Any>>
+
+    @POST("delete_account.php")
+    suspend fun deleteAccount(): Response<ApiResponse<Any>>
+    
     // Sync
     @GET("sync.php")
     suspend fun getSyncData(): Response<ApiResponse<com.vsdigitallabs.pocketpaise.stdbt.data.model.SyncData>>

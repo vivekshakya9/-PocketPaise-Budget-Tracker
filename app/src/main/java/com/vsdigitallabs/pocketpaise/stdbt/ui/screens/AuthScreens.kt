@@ -572,7 +572,7 @@ fun RegisterScreen(navController: NavController, viewModel: PocketPaiseViewModel
             OutlinedTextField(
                 value = collegeName,
                 onValueChange = { collegeName = it },
-                label = { Text("College/University Name") },
+                label = { Text("College/University Name (Optional)") },
                 leadingIcon = { Icon(Icons.Default.School, contentDescription = "School") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -584,7 +584,7 @@ fun RegisterScreen(navController: NavController, viewModel: PocketPaiseViewModel
             OutlinedTextField(
                 value = city,
                 onValueChange = { city = it },
-                label = { Text("City") },
+                label = { Text("City (Optional)") },
                 leadingIcon = { Icon(Icons.Default.LocationCity, contentDescription = "City") },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,

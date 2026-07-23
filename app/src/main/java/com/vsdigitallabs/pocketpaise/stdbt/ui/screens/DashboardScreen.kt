@@ -71,7 +71,6 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
 
     val todayTransactions = transactions.filter { it.timestamp >= todayStart }
     val todayExpense = todayTransactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
-    val todayIncome = todayTransactions.filter { it.type == "INCOME" }.sumOf { it.amount }
 
     // Monthly values
     val currentMonth = Calendar.getInstance().get(Calendar.MONTH)
@@ -81,6 +80,7 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
         cal.get(Calendar.MONTH) == currentMonth && cal.get(Calendar.YEAR) == currentYear
     }
     val monthlyExpense = monthlyTransactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
+    val monthlyIncome = monthlyTransactions.filter { it.type == "INCOME" }.sumOf { it.amount }
     val totalBudgetLimits = budgets.sumOf { it.limitAmount }
     val remainingBudget = if (totalBudgetLimits > 0) totalBudgetLimits - monthlyExpense else 0.0
 
@@ -277,7 +277,7 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "+ $currencySymbol${String.format("%,.0f", todayIncome)}",
+                                    text = "+ $currencySymbol${String.format("%,.0f", monthlyIncome)}",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimary
@@ -303,7 +303,7 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "- $currencySymbol${String.format("%,.0f", todayExpense)}",
+                                    text = "- $currencySymbol${String.format("%,.0f", monthlyExpense)}",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimary

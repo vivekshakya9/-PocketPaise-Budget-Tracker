@@ -490,34 +490,53 @@ class PocketPaiseViewModel(
 
     fun forgotPassword(email: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
-            val user = repository.getUserByEmail(email)
-            if (user == null) {
-                onError("No account found with this email.")
-            } else {
-                // Mock password reset OTP / reset link
-                onSuccess()
+            try {
+                val response = com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.forgotPassword(mapOf("email" to email))
+                if (response.isSuccessful && response.body()?.success == true) {
+                    onSuccess()
+                } else {
+                    val errorStr = response.errorBody()?.string()
+                    val msg = try {
+                        org.json.JSONObject(errorStr ?: "").getString("message")
+                    } catch (e: Exception) {
+                        "Failed to send reset link."
+                    }
+                    onError(msg)
+                }
+            } catch (e: Exception) {
+                onError("Network error. Please check connection.")
             }
         }
     }
 
     fun changePassword(oldPass: String, newPass: String, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
-            val user = currentUser.value
-            if (user == null) {
-                onError("User session expired.")
+            if (newPass.length < 6) {
+                onError("New password must be at least 6 characters long.")
                 return@launch
             }
-            if (user.passwordHash != oldPass) {
-                onError("Current password is incorrect.")
-                return@launch
+            try {
+                val response = com.vsdigitallabs.pocketpaise.stdbt.data.network.RetrofitClient.apiService.changePassword(
+                    mapOf("old_password" to oldPass, "new_password" to newPass)
+                )
+                if (response.isSuccessful && response.body()?.success == true) {
+                    val user = currentUser.value
+                    if (user != null) {
+                        repository.updateUser(user.copy(passwordHash = newPass))
+                    }
+                    onSuccess()
+                } else {
+                    val errorStr = response.errorBody()?.string()
+                    val msg = try {
+                        org.json.JSONObject(errorStr ?: "").getString("message")
+                    } catch (e: Exception) {
+                        "Failed to change password."
+                    }
+                    onError(msg)
+                }
+            } catch (e: Exception) {
+                onError("Network error. Please check connection.")
             }
-            if (newPass.length < 4) {
-                onError("New password must be at least 4 characters long.")
-                return@launch
-            }
-            val updated = user.copy(passwordHash = newPass)
-            repository.updateUser(updated)
-            onSuccess()
         }
     }
 

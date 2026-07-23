@@ -625,27 +625,31 @@ fun SettingsScreen(navController: NavController, viewModel: PocketPaiseViewModel
 
                     Button(
                         onClick = {
-                            Toast.makeText(context, "Encrypted local SQLite backup successfully written to app sandbox storage!", Toast.LENGTH_LONG).show()
+                            val syncWorkRequest = androidx.work.OneTimeWorkRequestBuilder<com.vsdigitallabs.pocketpaise.stdbt.worker.SyncWorker>().build()
+                            androidx.work.WorkManager.getInstance(context).enqueue(syncWorkRequest)
+                            Toast.makeText(context, "Secure Cloud Backup started successfully!", Toast.LENGTH_LONG).show()
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.CloudUpload, contentDescription = "Backup")
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Secure Local Backup")
+                            Text("Secure Cloud Backup")
                         }
                     }
 
                     OutlinedButton(
                         onClick = {
-                            Toast.makeText(context, "PocketPaise database restored to last verified local sync snapshot!", Toast.LENGTH_LONG).show()
+                            val syncWorkRequest = androidx.work.OneTimeWorkRequestBuilder<com.vsdigitallabs.pocketpaise.stdbt.worker.SyncWorker>().build()
+                            androidx.work.WorkManager.getInstance(context).enqueue(syncWorkRequest)
+                            Toast.makeText(context, "Restoring database from Cloud Snapshot...", Toast.LENGTH_LONG).show()
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.CloudDownload, contentDescription = "Restore")
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Restore Database Snapshot")
+                            Text("Restore from Cloud Snapshot")
                         }
                     }
                 }
