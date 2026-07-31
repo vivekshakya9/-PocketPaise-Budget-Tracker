@@ -45,7 +45,7 @@ class MainActivity : FragmentActivity() {
         MobileAds.initialize(this) {}
         com.vsdigitallabs.pocketpaise.stdbt.utils.AppOpenAdManager(application)
         com.vsdigitallabs.pocketpaise.stdbt.utils.InterstitialAdManager.loadAd(this)
-        enableEdgeToEdge()
+        // Edge to edge will be dynamically handled in setContent based on user theme preferences
 
         // Enqueue Daily Budget Alert Worker
         val workRequest = androidx.work.PeriodicWorkRequestBuilder<com.vsdigitallabs.pocketpaise.stdbt.worker.BudgetAlertWorker>(24, java.util.concurrent.TimeUnit.HOURS).build()
@@ -62,6 +62,23 @@ class MainActivity : FragmentActivity() {
             )
             viewModel.initContext(this)
             val isDarkMode by viewModel.isDarkMode.collectAsState()
+            
+            // Dynamically adjust edge-to-edge based on the app's current theme, not just system theme
+            val context = androidx.compose.ui.platform.LocalContext.current as androidx.activity.ComponentActivity
+            LaunchedEffect(isDarkMode) {
+                context.enableEdgeToEdge(
+                    statusBarStyle = androidx.activity.SystemBarStyle.auto(
+                        android.graphics.Color.TRANSPARENT,
+                        android.graphics.Color.TRANSPARENT,
+                        detectDarkMode = { isDarkMode }
+                    ),
+                    navigationBarStyle = androidx.activity.SystemBarStyle.auto(
+                        android.graphics.Color.TRANSPARENT,
+                        android.graphics.Color.TRANSPARENT,
+                        detectDarkMode = { isDarkMode }
+                    )
+                )
+            }
             
             val prefs = getSharedPreferences("PocketPaisePrefs", android.content.Context.MODE_PRIVATE)
             val isMaintenanceMode = prefs.getBoolean("maintenance_mode", false)
@@ -96,7 +113,7 @@ class MainActivity : FragmentActivity() {
                 )
 
                 Scaffold(
-                    modifier = Modifier.fillMaxSize().safeDrawingPadding(),
+                    modifier = Modifier.fillMaxSize(),
                     bottomBar = {
                         if (showBottomBar) {
                             NavigationBar(
