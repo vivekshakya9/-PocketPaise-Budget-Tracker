@@ -45,7 +45,7 @@ android {
       isCrunchPngs = false
       isMinifyEnabled = false
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      val keystoreFile = file(System.getenv("KEYSTORE_PATH") ?: "${rootDir}/my-upload-key.jks")
+      val keystoreFile = file(System.getenv("KEYSTORE_PATH") ?: "${rootDir}/pocketpaise-keystore.jks")
       if (keystoreFile.exists()) {
           signingConfig = signingConfigs.getByName("release")
       }
