@@ -107,8 +107,16 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
     val periodExpense = periodTransactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
     val periodIncome = periodTransactions.filter { it.type == "INCOME" }.sumOf { it.amount }
 
+    // Monthly-scoped values for budgets
+    val monthlyTransactions = transactions.filter {
+        val cal = Calendar.getInstance().apply { timeInMillis = it.timestamp }
+        cal.get(Calendar.MONTH) == currentMonth && cal.get(Calendar.YEAR) == currentYear
+    }
+    val monthlyExpense = monthlyTransactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
+    val monthlyIncome = monthlyTransactions.filter { it.type == "INCOME" }.sumOf { it.amount }
+
     val totalBudgetLimits = budgets.sumOf { it.limitAmount }
-    val remainingBudget = if (totalBudgetLimits > 0) totalBudgetLimits - periodExpense else 0.0
+    val remainingBudget = if (totalBudgetLimits > 0) totalBudgetLimits - monthlyExpense else 0.0
 
     Scaffold(
         topBar = {
@@ -616,7 +624,7 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                                             )
                                         }
                                         Text(
-                                            text = "${((entry.value / totalMonthlyExpense) * 100).toInt()}%",
+                                            text = "${((entry.value / totalPeriodExpense) * 100).toInt()}%",
                                             fontSize = 12.sp,
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f)
