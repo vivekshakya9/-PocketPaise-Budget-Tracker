@@ -22,7 +22,24 @@ jobs:
 
     - name: Install Gradle
       run: |
-        curl -fsSL --retry 5 --retry-delay 5 "https://services.gradle.org/distributions/gradle-9.3.1-bin.zip" -o gradle-bin.zip
+        MIRRORS=(
+          "https://mirrors.cloud.tencent.com/gradle/gradle-9.3.1-bin.zip"
+          "https://downloads.gradle.org/distributions/gradle-9.3.1-bin.zip"
+          "https://services.gradle.org/distributions/gradle-9.3.1-bin.zip"
+        )
+        for url in "${MIRRORS[@]}"; do
+          echo "Attempting to download Gradle from $url..."
+          if curl -fsSL --connect-timeout 15 --max-time 180 --retry 3 --retry-delay 3 "$url" -o gradle-bin.zip; then
+            echo "Successfully downloaded Gradle from $url"
+            break
+          else
+            echo "Failed to download from $url, trying next mirror..."
+          fi
+        done
+        if [ ! -f gradle-bin.zip ]; then
+          echo "Error: Could not download Gradle from any mirror."
+          exit 1
+        fi
         sudo unzip -qo gradle-bin.zip -d /opt
         echo "/opt/gradle-9.3.1/bin" >> $GITHUB_PATH
         rm -f gradle-bin.zip
