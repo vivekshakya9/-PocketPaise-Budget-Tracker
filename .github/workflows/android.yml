@@ -26,10 +26,10 @@ jobs:
         gradle-version: '9.3.1'
 
     - name: Build Debug APK
-      run: gradle assembleDebug
+      run: gradle assembleDebug --no-configuration-cache
 
     - name: Build Release Bundle (AAB)
-      run: gradle bundleRelease
+      run: gradle bundleRelease --no-configuration-cache
 
     - name: Upload APK
       uses: actions/upload-artifact@v4
