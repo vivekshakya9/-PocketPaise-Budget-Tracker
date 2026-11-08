@@ -20,10 +20,12 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Setup Gradle
-      uses: gradle/actions/setup-gradle@v3
-      with:
-        gradle-version: '9.3.1'
+    - name: Install Gradle
+      run: |
+        curl -fsSL --retry 5 --retry-delay 5 "https://services.gradle.org/distributions/gradle-9.3.1-bin.zip" -o gradle-bin.zip
+        sudo unzip -qo gradle-bin.zip -d /opt
+        echo "/opt/gradle-9.3.1/bin" >> $GITHUB_PATH
+        rm -f gradle-bin.zip
 
     - name: Build Debug APK
       run: gradle assembleDebug --no-configuration-cache
