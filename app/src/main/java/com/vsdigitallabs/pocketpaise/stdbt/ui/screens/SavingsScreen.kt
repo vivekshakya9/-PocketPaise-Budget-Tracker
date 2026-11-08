@@ -414,7 +414,7 @@ fun AddSavingsGoalDialog(
                 OutlinedTextField(
                     value = targetStr,
                     onValueChange = { targetStr = it },
-                    label = { Text("Target Amount (INR)") },
+                    label = { Text("Target Amount") },
                     placeholder = { Text("e.g. 5000") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth().testTag("goal_target_input"),

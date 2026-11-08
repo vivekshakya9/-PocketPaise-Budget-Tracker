@@ -742,23 +742,43 @@ fun SettingsScreen(navController: NavController, viewModel: PocketPaiseViewModel
 
         // Dialogs
         if (showCurrencyDialog) {
+            val currencyList = listOf(
+                Pair("₹", "₹ - Indian Rupee (INR)"),
+                Pair("$", "$ - US Dollar (USD)"),
+                Pair("£", "£ - British Pound (GBP)"),
+                Pair("€", "€ - Euro (EUR)"),
+                Pair("AED", "AED - UAE Dirham"),
+                Pair("SAR", "SAR - Saudi Riyal"),
+                Pair("CA$", "CA$ - Canadian Dollar"),
+                Pair("A$", "A$ - Australian Dollar"),
+                Pair("S$", "S$ - Singapore Dollar"),
+                Pair("RM", "RM - Malaysian Ringgit"),
+                Pair("¥", "¥ - Japanese Yen"),
+                Pair("Rs", "Rs - South Asian Rupee"),
+                Pair("৳", "৳ - Bangladeshi Taka"),
+                Pair("R", "R - South African Rand")
+            )
             AlertDialog(
                 onDismissRequest = { showCurrencyDialog = false },
                 title = { Text("Choose Default Currency") },
                 text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        listOf("₹ (Indian Rupee)", "$ (US Dollar)", "£ (British Pound)", "€ (Euro)").forEach { currOption ->
+                    Column(
+                        modifier = Modifier.verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        currencyList.forEach { (sym, display) ->
                             Text(
-                                text = currOption,
+                                text = display,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clickable {
-                                        viewModel.setCurrency(currOption.first().toString())
+                                        viewModel.setCurrency(sym)
                                         showCurrencyDialog = false
-                                        Toast.makeText(context, "Currency set to ${currOption.first()}", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(context, "Currency set to $display", Toast.LENGTH_SHORT).show()
                                     }
-                                    .padding(vertical = 12.dp, horizontal = 8.dp),
-                                fontWeight = FontWeight.Medium
+                                    .padding(vertical = 10.dp, horizontal = 8.dp),
+                                fontWeight = if (currency == sym) FontWeight.Bold else FontWeight.Medium,
+                                color = if (currency == sym) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }

@@ -46,7 +46,7 @@ object ExportUtil {
         }
     }
 
-    fun exportToPdf(context: Context, transactions: List<Transaction>, totalIncome: Double, totalExpense: Double) {
+    fun exportToPdf(context: Context, transactions: List<Transaction>, totalIncome: Double, totalExpense: Double, currencySymbol: String = "₹") {
         val pdfDocument = PdfDocument()
         val pageInfo = PdfDocument.PageInfo.Builder(595, 842, 1).create() // A4 size
         var page = pdfDocument.startPage(pageInfo)
@@ -83,14 +83,14 @@ object ExportUtil {
             paint.isFakeBoldText = true
             
             paint.color = greenColor
-            canvas.drawText("Total Income: ₹$totalIncome", 40f, 180f, paint)
+            canvas.drawText("Total Income: $currencySymbol$totalIncome", 40f, 180f, paint)
             
             paint.color = redColor
-            canvas.drawText("Total Expense: ₹$totalExpense", 250f, 180f, paint)
+            canvas.drawText("Total Expense: $currencySymbol$totalExpense", 250f, 180f, paint)
             
             val net = totalIncome - totalExpense
             paint.color = if (net >= 0) primaryColor else redColor
-            canvas.drawText("Net Balance: ₹$net", 450f, 180f, paint)
+            canvas.drawText("Net Balance: $currencySymbol$net", 450f, 180f, paint)
         }
 
         fun drawTableHeader(yPos: Float) {
@@ -146,7 +146,7 @@ object ExportUtil {
             paint.color = if (tx.type == "INCOME") greenColor else redColor
             paint.isFakeBoldText = true
             canvas.drawText(tx.type, 420f, yPos, paint)
-            canvas.drawText("₹${tx.amount}", 490f, yPos, paint)
+            canvas.drawText("$currencySymbol${tx.amount}", 490f, yPos, paint)
             
             paint.isFakeBoldText = false
             yPos += 20f

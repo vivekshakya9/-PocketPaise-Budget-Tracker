@@ -93,7 +93,7 @@ fun ReportsScreen(navController: NavController, viewModel: PocketPaiseViewModel)
                 },
                 actions = {
                     IconButton(onClick = { 
-                        ExportUtil.exportToPdf(context, filteredTxs, totalIncome, totalExpense)
+                        ExportUtil.exportToPdf(context, filteredTxs, totalIncome, totalExpense, currencySymbol)
                     }) {
                         Icon(Icons.Default.PictureAsPdf, contentDescription = "Export PDF", tint = MaterialTheme.colorScheme.onPrimary)
                     }

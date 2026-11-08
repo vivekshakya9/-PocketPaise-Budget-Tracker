@@ -34,6 +34,8 @@ import com.vsdigitallabs.pocketpaise.stdbt.ui.navigation.Screen
 import com.vsdigitallabs.pocketpaise.stdbt.ui.theme.EmeraldPrimary
 import com.vsdigitallabs.pocketpaise.stdbt.ui.theme.EmeraldPrimaryDark
 import com.vsdigitallabs.pocketpaise.stdbt.ui.theme.MarigoldTertiary
+import com.vsdigitallabs.pocketpaise.stdbt.data.model.CountryData
+import com.vsdigitallabs.pocketpaise.stdbt.data.model.SupportedCountries
 import com.vsdigitallabs.pocketpaise.stdbt.viewmodel.PocketPaiseViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -107,7 +109,7 @@ fun SplashScreen(navController: NavController, viewModel: PocketPaiseViewModel) 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Student Budget Tracker (India)",
+                    text = "Student Budget Tracker",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.7f),
@@ -134,6 +136,8 @@ fun LoginScreen(navController: NavController, viewModel: PocketPaiseViewModel) {
     var rememberLogin by remember { mutableStateOf(false) }
     var isGoogleLoading by remember { mutableStateOf(false) }
     var isLoginLoading by remember { mutableStateOf(false) }
+    var showGoogleCountryDialog by remember { mutableStateOf(false) }
+    var pendingGoogleUserId by remember { mutableStateOf<Long?>(null) }
 
     val focusManager = LocalFocusManager.current
     var errorMessage by remember { mutableStateOf<String?>(null) }
@@ -368,8 +372,14 @@ fun LoginScreen(navController: NavController, viewModel: PocketPaiseViewModel) {
                                     name = googleIdTokenCredential.displayName ?: "Student",
                                     onSuccess = {
                                         isGoogleLoading = false
-                                        navController.navigate(Screen.Dashboard.route) {
-                                            popUpTo(Screen.Login.route) { inclusive = true }
+                                        val userId = viewModel.currentUserId.value ?: 0L
+                                        if (!viewModel.isCountrySetupCompleted(userId)) {
+                                            pendingGoogleUserId = userId
+                                            showGoogleCountryDialog = true
+                                        } else {
+                                            navController.navigate(Screen.Dashboard.route) {
+                                                popUpTo(Screen.Login.route) { inclusive = true }
+                                            }
                                         }
                                     },
                                     onError = { error -> 
@@ -447,6 +457,26 @@ fun LoginScreen(navController: NavController, viewModel: PocketPaiseViewModel) {
             
             Spacer(modifier = Modifier.height(24.dp))
         }
+
+        if (showGoogleCountryDialog && pendingGoogleUserId != null) {
+            CountryCurrencySetupDialog(
+                onDismiss = {
+                    viewModel.markCountrySetupCompleted(pendingGoogleUserId!!)
+                    showGoogleCountryDialog = false
+                    navController.navigate(Screen.Dashboard.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                },
+                onConfirm = { country, currencySymbol ->
+                    viewModel.setCountryAndCurrency(country.name, currencySymbol)
+                    viewModel.markCountrySetupCompleted(pendingGoogleUserId!!)
+                    showGoogleCountryDialog = false
+                    navController.navigate(Screen.Dashboard.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -460,6 +490,8 @@ fun RegisterScreen(navController: NavController, viewModel: PocketPaiseViewModel
     var city by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var selectedCountry by remember { mutableStateOf(SupportedCountries.list.first()) }
+    var showCountryPicker by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
 
@@ -553,14 +585,129 @@ fun RegisterScreen(navController: NavController, viewModel: PocketPaiseViewModel
 
             Spacer(modifier = Modifier.height(14.dp))
 
+            // Country Selector
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedCard(
+                    onClick = { showCountryPicker = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.outlinedCardColors(containerColor = MaterialTheme.colorScheme.surface)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 14.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(text = selectedCountry.flag, fontSize = 22.sp)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Column {
+                                Text(
+                                    text = "Country",
+                                    fontSize = 11.sp,
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                )
+                                Text(
+                                    text = "${selectedCountry.name} (${selectedCountry.dialCode})",
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                            }
+                        }
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Select Country",
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+
+                DropdownMenu(
+                    expanded = showCountryPicker,
+                    onDismissRequest = { showCountryPicker = false },
+                    modifier = Modifier.fillMaxWidth(0.85f).heightIn(max = 320.dp)
+                ) {
+                    SupportedCountries.list.forEach { country ->
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(text = country.flag, fontSize = 18.sp)
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    Text(
+                                        text = "${country.name} (${country.dialCode})",
+                                        fontWeight = if (country.name == selectedCountry.name) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                }
+                            },
+                            onClick = {
+                                selectedCountry = country
+                                showCountryPicker = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Country Currency Indicator
+            Card(
+                shape = RoundedCornerShape(10.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Paid,
+                        contentDescription = "Currency",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Default Currency: ${selectedCountry.currencyName}",
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
+
             OutlinedTextField(
                 value = mobileNumber,
                 onValueChange = { 
                     mobileNumber = it
                     errorMessage = null
                 },
-                label = { Text("Mobile Number (India)") },
-                leadingIcon = { Icon(Icons.Default.Phone, contentDescription = "Phone") },
+                label = { Text("Mobile Number") },
+                leadingIcon = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(start = 12.dp, end = 6.dp)
+                    ) {
+                        Text(
+                            text = "${selectedCountry.flag} ${selectedCountry.dialCode}",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Box(
+                            modifier = Modifier
+                                .width(1.dp)
+                                .height(20.dp)
+                                .background(MaterialTheme.colorScheme.outlineVariant)
+                        )
+                    }
+                },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
@@ -621,14 +768,20 @@ fun RegisterScreen(navController: NavController, viewModel: PocketPaiseViewModel
             // Register Button
             Button(
                 onClick = {
+                    val trimmedNumber = mobileNumber.trim()
+                    val fullMobile = if (trimmedNumber.startsWith("+")) trimmedNumber else "${selectedCountry.dialCode} $trimmedNumber"
+                    viewModel.setCountryAndCurrency(selectedCountry.name, selectedCountry.currencySymbol)
                     viewModel.registerUser(
                         name = fullName,
                         email = email,
-                        mobile = mobileNumber,
+                        mobile = fullMobile,
                         college = collegeName,
                         city = city,
                         pass = password,
                         onSuccess = {
+                            viewModel.currentUserId.value?.let { uid ->
+                                viewModel.markCountrySetupCompleted(uid)
+                            }
                             navController.navigate(Screen.Dashboard.route) {
                                 popUpTo(Screen.Login.route) { inclusive = true }
                             }
@@ -830,4 +983,146 @@ fun ForgotPasswordScreen(navController: NavController, viewModel: PocketPaiseVie
             }
         }
     }
+}
+
+@Composable
+fun CountryCurrencySetupDialog(
+    onDismiss: () -> Unit,
+    onConfirm: (country: CountryData, currencySymbol: String) -> Unit
+) {
+    var selectedCountry by remember { mutableStateOf(SupportedCountries.list.first()) }
+    var showCountryMenu by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Column {
+                Text(
+                    text = "Welcome to PocketPaise! 🌍",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "Select your country and default currency to customize your experience.",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                )
+            }
+        },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                // Country Dropdown
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    OutlinedCard(
+                        onClick = { showCountryMenu = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(14.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = selectedCountry.flag, fontSize = 22.sp)
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(
+                                        text = "Country",
+                                        fontSize = 11.sp,
+                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                                    )
+                                    Text(
+                                        text = selectedCountry.name,
+                                        fontSize = 14.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
+                            Icon(Icons.Default.ArrowDropDown, contentDescription = "Dropdown")
+                        }
+                    }
+
+                    DropdownMenu(
+                        expanded = showCountryMenu,
+                        onDismissRequest = { showCountryMenu = false },
+                        modifier = Modifier.fillMaxWidth(0.85f).heightIn(max = 300.dp)
+                    ) {
+                        SupportedCountries.list.forEach { country ->
+                            DropdownMenuItem(
+                                text = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(text = country.flag, fontSize = 18.sp)
+                                        Spacer(modifier = Modifier.width(10.dp))
+                                        Text(
+                                            text = "${country.name} (${country.dialCode})",
+                                            fontWeight = if (country.name == selectedCountry.name) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                    }
+                                },
+                                onClick = {
+                                    selectedCountry = country
+                                    showCountryMenu = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // Currency card
+                Card(
+                    shape = RoundedCornerShape(10.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Paid,
+                            contentDescription = "Currency",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(
+                                text = "Default Currency",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            )
+                            Text(
+                                text = selectedCountry.currencyName,
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onConfirm(selectedCountry, selectedCountry.currencySymbol) },
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("Get Started")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Skip for Now")
+            }
+        }
+    )
 }

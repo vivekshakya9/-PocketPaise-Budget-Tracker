@@ -41,6 +41,7 @@ class PocketPaiseViewModel(
         val savedUserId = prefs.getLong("currentUserId", -1L)
         if (savedUserId != -1L) {
             _currentUserId.value = savedUserId
+            loadCustomCategories(savedUserId)
             fetchAndSyncData(savedUserId, {}, {})
         }
     }
@@ -124,8 +125,17 @@ class PocketPaiseViewModel(
     private val _isDarkMode = MutableStateFlow(false)
     val isDarkMode: StateFlow<Boolean> = _isDarkMode.asStateFlow()
 
-    private val _selectedCurrency = MutableStateFlow("₹")
+    private val _selectedCurrency = MutableStateFlow(prefs.getString("selected_currency", "₹") ?: "₹")
     val selectedCurrency: StateFlow<String> = _selectedCurrency.asStateFlow()
+
+    private val _selectedCountry = MutableStateFlow(prefs.getString("selected_country", "India") ?: "India")
+    val selectedCountry: StateFlow<String> = _selectedCountry.asStateFlow()
+
+    private val _customExpenseCategories = MutableStateFlow<List<String>>(emptyList())
+    val customExpenseCategories: StateFlow<List<String>> = _customExpenseCategories.asStateFlow()
+
+    private val _customIncomeCategories = MutableStateFlow<List<String>>(emptyList())
+    val customIncomeCategories: StateFlow<List<String>> = _customIncomeCategories.asStateFlow()
 
     private val _selectedLanguage = MutableStateFlow("English")
     val selectedLanguage: StateFlow<String> = _selectedLanguage.asStateFlow()
@@ -363,6 +373,9 @@ class PocketPaiseViewModel(
                     }
                     
                     _currentUserId.value = serverUserId
+                    prefs.edit().putLong("currentUserId", serverUserId).apply()
+                    loadCustomCategories(serverUserId)
+                    loadCustomCategories(serverUserId)
                     onSuccess()
                 } else {
                     val errorString = response.errorBody()?.string()
@@ -429,6 +442,7 @@ class PocketPaiseViewModel(
                     
                     _currentUserId.value = serverUserId
                     prefs.edit().putLong("currentUserId", serverUserId).apply()
+                    loadCustomCategories(serverUserId)
                     
                     // Fetch data from server to populate DB
                     fetchAndSyncData(serverUserId, onSuccess = {
@@ -581,6 +595,7 @@ class PocketPaiseViewModel(
                     
                     _currentUserId.value = serverUserId
                     prefs.edit().putLong("currentUserId", serverUserId).apply()
+                    loadCustomCategories(serverUserId)
                     
                     // Navigate immediately, sync in background
                     onSuccess()
@@ -1019,6 +1034,28 @@ class PocketPaiseViewModel(
         }
     }
 
+    fun loadCustomCategories(userId: Long) {
+        val expenseCats = prefs.getStringSet("custom_cat_EXPENSE_$userId", emptySet()) ?: emptySet()
+        val incomeCats = prefs.getStringSet("custom_cat_INCOME_$userId", emptySet()) ?: emptySet()
+        _customExpenseCategories.value = expenseCats.sorted()
+        _customIncomeCategories.value = incomeCats.sorted()
+    }
+
+    fun addCustomCategory(type: String, categoryName: String) {
+        val trimmed = categoryName.trim()
+        if (trimmed.isEmpty()) return
+        val userId = _currentUserId.value ?: 0L
+        val key = if (type == "EXPENSE") "custom_cat_EXPENSE_$userId" else "custom_cat_INCOME_$userId"
+        val existing = prefs.getStringSet(key, emptySet())?.toMutableSet() ?: mutableSetOf()
+        existing.add(trimmed)
+        prefs.edit().putStringSet(key, existing).apply()
+        if (type == "EXPENSE") {
+            _customExpenseCategories.value = existing.sorted()
+        } else {
+            _customIncomeCategories.value = existing.sorted()
+        }
+    }
+
     // Settings adjustments
     fun setDarkMode(enabled: Boolean) {
         _isDarkMode.value = enabled
@@ -1026,6 +1063,24 @@ class PocketPaiseViewModel(
 
     fun setCurrency(symbol: String) {
         _selectedCurrency.value = symbol
+        prefs.edit().putString("selected_currency", symbol).apply()
+    }
+
+    fun setCountryAndCurrency(country: String, symbol: String) {
+        _selectedCountry.value = country
+        _selectedCurrency.value = symbol
+        prefs.edit()
+            .putString("selected_country", country)
+            .putString("selected_currency", symbol)
+            .apply()
+    }
+
+    fun isCountrySetupCompleted(userId: Long): Boolean {
+        return prefs.getBoolean("country_setup_completed_$userId", false)
+    }
+
+    fun markCountrySetupCompleted(userId: Long) {
+        prefs.edit().putBoolean("country_setup_completed_$userId", true).apply()
     }
 
     fun setLanguage(language: String) {

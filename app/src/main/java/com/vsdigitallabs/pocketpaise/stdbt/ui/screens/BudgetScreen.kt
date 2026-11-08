@@ -36,6 +36,7 @@ fun BudgetScreen(navController: NavController, viewModel: PocketPaiseViewModel) 
     val budgets by viewModel.currentBudgets.collectAsState()
     val transactions by viewModel.allTransactions.collectAsState()
     val currencySymbol by viewModel.selectedCurrency.collectAsState()
+    val customExpenseCategories by viewModel.customExpenseCategories.collectAsState()
 
     var showAddBudgetDialog by remember { mutableStateOf(false) }
 
@@ -165,6 +166,7 @@ fun BudgetScreen(navController: NavController, viewModel: PocketPaiseViewModel) 
         // Add/Edit Budget Dialog
         if (showAddBudgetDialog) {
             AddBudgetDialog(
+                customCategories = customExpenseCategories,
                 onDismiss = { showAddBudgetDialog = false },
                 onConfirm = { category, limit ->
                     viewModel.addBudget(category, limit, viewModel.currentMonthYear.value)
@@ -339,10 +341,14 @@ fun BudgetRowItem(
 
 @Composable
 fun AddBudgetDialog(
+    customCategories: List<String> = emptyList(),
     onDismiss: () -> Unit,
     onConfirm: (category: String, limit: Double) -> Unit
 ) {
-    val categories = listOf("Food", "Travel", "Books", "College Fees", "Recharge", "Shopping", "Medical", "Entertainment", "Rent", "Other")
+    val categories = remember(customCategories) {
+        val baseWithoutOther = listOf("Food", "Travel", "Books", "College Fees", "Recharge", "Shopping", "Medical", "Entertainment", "Rent")
+        (baseWithoutOther + customCategories + listOf("Other")).distinct()
+    }
     var selectedCategory by remember { mutableStateOf(categories.first()) }
     var limitStr by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
@@ -395,7 +401,7 @@ fun AddBudgetDialog(
                 OutlinedTextField(
                     value = limitStr,
                     onValueChange = { limitStr = it },
-                    label = { Text("Monthly Limit Amount (INR)") },
+                    label = { Text("Monthly Limit Amount") },
                     placeholder = { Text("e.g. 3000") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth().testTag("budget_limit_input"),

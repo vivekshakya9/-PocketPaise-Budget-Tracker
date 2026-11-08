@@ -54,10 +54,16 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
     val currencySymbol by viewModel.selectedCurrency.collectAsState()
     val bannerEnabled by viewModel.bannerEnabled.collectAsState()
     val bannerUnitId by viewModel.bannerUnitId.collectAsState()
+    val customExpenseCategories by viewModel.customExpenseCategories.collectAsState()
+    val customIncomeCategories by viewModel.customIncomeCategories.collectAsState()
 
     // Dialog trigger states
     var showAddExpenseDialog by remember { mutableStateOf(false) }
     var showAddIncomeDialog by remember { mutableStateOf(false) }
+
+    // Time range filter state for dashboard
+    var selectedTimeRange by remember { mutableStateOf("Monthly") }
+    var showTimeRangeMenu by remember { mutableStateOf(false) }
 
     val scrollState = rememberScrollState()
 
@@ -72,17 +78,37 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
     val todayTransactions = transactions.filter { it.timestamp >= todayStart }
     val todayExpense = todayTransactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
 
-    // Monthly values
+    // Time-scoped values based on selectedTimeRange (Monthly, Last 3 Months, Last 6 Months, This Year, All Time)
     val currentMonth = Calendar.getInstance().get(Calendar.MONTH)
     val currentYear = Calendar.getInstance().get(Calendar.YEAR)
-    val monthlyTransactions = transactions.filter {
-        val cal = Calendar.getInstance().apply { timeInMillis = it.timestamp }
-        cal.get(Calendar.MONTH) == currentMonth && cal.get(Calendar.YEAR) == currentYear
+    val threeMonthsAgo = Calendar.getInstance().apply { add(Calendar.MONTH, -3) }.timeInMillis
+    val sixMonthsAgo = Calendar.getInstance().apply { add(Calendar.MONTH, -6) }.timeInMillis
+    val thisYearStart = Calendar.getInstance().apply {
+        set(Calendar.DAY_OF_YEAR, 1)
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
+
+    val periodTransactions = transactions.filter { tx ->
+        when (selectedTimeRange) {
+            "Monthly" -> {
+                val cal = Calendar.getInstance().apply { timeInMillis = tx.timestamp }
+                cal.get(Calendar.MONTH) == currentMonth && cal.get(Calendar.YEAR) == currentYear
+            }
+            "Last 3 Months" -> tx.timestamp >= threeMonthsAgo
+            "Last 6 Months" -> tx.timestamp >= sixMonthsAgo
+            "This Year" -> tx.timestamp >= thisYearStart
+            "All Time" -> true
+            else -> true
+        }
     }
-    val monthlyExpense = monthlyTransactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
-    val monthlyIncome = monthlyTransactions.filter { it.type == "INCOME" }.sumOf { it.amount }
+    val periodExpense = periodTransactions.filter { it.type == "EXPENSE" }.sumOf { it.amount }
+    val periodIncome = periodTransactions.filter { it.type == "INCOME" }.sumOf { it.amount }
+
     val totalBudgetLimits = budgets.sumOf { it.limitAmount }
-    val remainingBudget = if (totalBudgetLimits > 0) totalBudgetLimits - monthlyExpense else 0.0
+    val remainingBudget = if (totalBudgetLimits > 0) totalBudgetLimits - periodExpense else 0.0
 
     Scaffold(
         topBar = {
@@ -238,18 +264,50 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                                 color = MaterialTheme.colorScheme.onPrimary
                             )
                         }
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(100.dp))
-                                .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f))
-                                .padding(horizontal = 12.dp, vertical = 4.dp)
-                        ) {
-                            Text(
-                                text = "Monthly",
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimary
-                            )
+                        Box {
+                            Row(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(100.dp))
+                                    .background(MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.2f))
+                                    .clickable { showTimeRangeMenu = true }
+                                    .padding(horizontal = 10.dp, vertical = 4.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = selectedTimeRange,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimary
+                                )
+                                Spacer(modifier = Modifier.width(3.dp))
+                                Icon(
+                                    imageVector = Icons.Default.ArrowDropDown,
+                                    contentDescription = "Select Time Range",
+                                    tint = MaterialTheme.colorScheme.onPrimary,
+                                    modifier = Modifier.size(14.dp)
+                                )
+                            }
+
+                            DropdownMenu(
+                                expanded = showTimeRangeMenu,
+                                onDismissRequest = { showTimeRangeMenu = false }
+                            ) {
+                                listOf("Monthly", "Last 3 Months", "Last 6 Months", "This Year", "All Time").forEach { range ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Text(
+                                                text = range,
+                                                fontWeight = if (range == selectedTimeRange) FontWeight.Bold else FontWeight.Normal,
+                                                color = if (range == selectedTimeRange) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                            )
+                                        },
+                                        onClick = {
+                                            selectedTimeRange = range
+                                            showTimeRangeMenu = false
+                                        }
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -277,7 +335,7 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "+ $currencySymbol${String.format("%,.0f", monthlyIncome)}",
+                                    text = "+ $currencySymbol${String.format("%,.0f", periodIncome)}",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimary
@@ -303,7 +361,7 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                                 )
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text(
-                                    text = "- $currencySymbol${String.format("%,.0f", monthlyExpense)}",
+                                    text = "- $currencySymbol${String.format("%,.0f", periodExpense)}",
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = MaterialTheme.colorScheme.onPrimary
@@ -447,7 +505,7 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                     modifier = Modifier.padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    val expenseTransactions = monthlyTransactions.filter { it.type == "EXPENSE" }
+                    val expenseTransactions = periodTransactions.filter { it.type == "EXPENSE" }
                     if (expenseTransactions.isEmpty()) {
                         Spacer(modifier = Modifier.height(12.dp))
                         Icon(
@@ -457,7 +515,7 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                             modifier = Modifier.size(48.dp)
                         )
                         Text(
-                            text = "No expenses recorded this month yet.",
+                            text = if (selectedTimeRange == "Monthly") "No expenses recorded this month yet." else "No expenses recorded for $selectedTimeRange yet.",
                             fontSize = 13.sp,
                             fontWeight = FontWeight.Medium,
                             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
@@ -472,7 +530,7 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                         val categoryGroups = expenseTransactions.groupBy { it.category }
                             .mapValues { entry -> entry.value.sumOf { it.amount } }
 
-                        val totalMonthlyExpense = categoryGroups.values.sum()
+                        val totalPeriodExpense = categoryGroups.values.sum()
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -494,7 +552,7 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                                     )
                                     
                                     categoryGroups.entries.forEachIndexed { index, entry ->
-                                        val sweep = ((entry.value / totalMonthlyExpense) * 360f).toFloat()
+                                        val sweep = ((entry.value / totalPeriodExpense) * 360f).toFloat()
                                         drawArc(
                                             color = colors[index % colors.size],
                                             startAngle = startAngle,
@@ -513,7 +571,7 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
                                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
                                     )
                                     Text(
-                                        text = "$currencySymbol${String.format("%.0f", totalMonthlyExpense)}",
+                                        text = "$currencySymbol${String.format("%.0f", totalPeriodExpense)}",
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.ExtraBold,
                                         color = MaterialTheme.colorScheme.onSurface
@@ -727,6 +785,8 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
             AddTransactionDialog(
                 type = "EXPENSE",
                 categories = listOf("Food", "Travel", "Books", "College Fees", "Recharge", "Shopping", "Medical", "Entertainment", "Rent", "Other"),
+                customCategories = customExpenseCategories,
+                onAddCustomCategory = { viewModel.addCustomCategory("EXPENSE", it) },
                 onDismiss = { showAddExpenseDialog = false },
                 onConfirm = { title, amount, category, notes ->
                     viewModel.addTransaction(
@@ -747,6 +807,8 @@ fun DashboardScreen(navController: NavController, viewModel: PocketPaiseViewMode
             AddTransactionDialog(
                 type = "INCOME",
                 categories = listOf("Pocket Money", "Parents", "Scholarship", "Part-Time Job", "Gift", "Other"),
+                customCategories = customIncomeCategories,
+                onAddCustomCategory = { viewModel.addCustomCategory("INCOME", it) },
                 onDismiss = { showAddIncomeDialog = false },
                 onConfirm = { title, amount, category, notes ->
                     viewModel.addTransaction(
@@ -859,16 +921,27 @@ fun TransactionItem(
 fun AddTransactionDialog(
     type: String,
     categories: List<String>,
+    customCategories: List<String> = emptyList(),
+    onAddCustomCategory: (String) -> Unit = {},
     onDismiss: () -> Unit,
     onConfirm: (title: String, amount: Double, category: String, notes: String) -> Unit
 ) {
     var title by remember { mutableStateOf("") }
     var amountStr by remember { mutableStateOf("") }
-    var selectedCategory by remember { mutableStateOf(categories.first()) }
+    
+    // Combine standard categories and user's custom categories, keeping Other at end
+    val fullCategories = remember(categories, customCategories) {
+        val baseWithoutOther = categories.filter { it != "Other" }
+        (baseWithoutOther + customCategories + listOf("Other")).distinct()
+    }
+    
+    var selectedCategory by remember { mutableStateOf(fullCategories.first()) }
     var notes by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     
     var showCategoryDropdown by remember { mutableStateOf(false) }
+    var showNewCategoryDialog by remember { mutableStateOf(false) }
+    var newCategoryInput by remember { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -902,7 +975,7 @@ fun AddTransactionDialog(
                 OutlinedTextField(
                     value = amountStr,
                     onValueChange = { amountStr = it },
-                    label = { Text("Amount (INR)") },
+                    label = { Text("Amount") },
                     placeholder = { Text("e.g. 50") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth().testTag("tx_amount_input"),
@@ -930,17 +1003,63 @@ fun AddTransactionDialog(
                     DropdownMenu(
                         expanded = showCategoryDropdown,
                         onDismissRequest = { showCategoryDropdown = false },
-                        modifier = Modifier.fillMaxWidth(0.8f)
+                        modifier = Modifier.fillMaxWidth(0.85f).heightIn(max = 350.dp)
                     ) {
-                        categories.forEach { cat ->
+                        fullCategories.forEach { cat ->
+                            val isCustom = cat in customCategories
                             DropdownMenuItem(
-                                text = { Text(text = cat) },
+                                text = {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = cat,
+                                            fontWeight = if (cat == selectedCategory) FontWeight.Bold else FontWeight.Normal
+                                        )
+                                        if (isCustom) {
+                                            Text(
+                                                text = "Custom",
+                                                fontSize = 10.sp,
+                                                color = MaterialTheme.colorScheme.primary,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                    }
+                                },
                                 onClick = {
                                     selectedCategory = cat
                                     showCategoryDropdown = false
                                 }
                             )
                         }
+
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+
+                        DropdownMenuItem(
+                            text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.AddCircleOutline,
+                                        contentDescription = "Add Custom Category",
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "+ Add Custom Category",
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            },
+                            onClick = {
+                                showCategoryDropdown = false
+                                newCategoryInput = ""
+                                showNewCategoryDialog = true
+                            }
+                        )
                     }
                 }
 
@@ -978,6 +1097,56 @@ fun AddTransactionDialog(
             }
         }
     )
+
+    if (showNewCategoryDialog) {
+        AlertDialog(
+            onDismissRequest = { showNewCategoryDialog = false },
+            title = {
+                Text(
+                    text = "Add Custom $type Category",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp
+                )
+            },
+            text = {
+                Column {
+                    Text(
+                        text = "Enter a new category name for tracking your ${type.lowercase()}.",
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedTextField(
+                        value = newCategoryInput,
+                        onValueChange = { newCategoryInput = it },
+                        label = { Text("Category Name") },
+                        placeholder = { Text("e.g. Gym, Freelance, Gadgets") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val trimmed = newCategoryInput.trim()
+                        if (trimmed.isNotEmpty()) {
+                            onAddCustomCategory(trimmed)
+                            selectedCategory = trimmed
+                            showNewCategoryDialog = false
+                        }
+                    }
+                ) {
+                    Text("Add & Select")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showNewCategoryDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 }
 
 @Composable

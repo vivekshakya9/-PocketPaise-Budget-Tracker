@@ -45,15 +45,21 @@ fun TransactionsScreen(navController: NavController, viewModel: PocketPaiseViewM
     val selectedType by viewModel.selectedTypeFilter.collectAsState()
     val currencySymbol by viewModel.selectedCurrency.collectAsState()
 
+    val customExpenseCategories by viewModel.customExpenseCategories.collectAsState()
+    val customIncomeCategories by viewModel.customIncomeCategories.collectAsState()
+
     var showExportDialog by remember { mutableStateOf<String?>(null) } // "PDF" or "Excel" or null
     val coroutineScope = rememberCoroutineScope()
     var showCategoryFilterMenu by remember { mutableStateOf(false) }
 
-    val allCategories = listOf(
-        "All Categories", "Food", "Travel", "Books", "College Fees", "Recharge", 
-        "Shopping", "Medical", "Entertainment", "Rent", "Savings", "Pocket Money", 
-        "Parents", "Scholarship", "Part-Time Job", "Gift", "Other"
-    )
+    val allCategories = remember(customExpenseCategories, customIncomeCategories) {
+        val base = listOf(
+            "All Categories", "Food", "Travel", "Books", "College Fees", "Recharge", 
+            "Shopping", "Medical", "Entertainment", "Rent", "Savings", "Pocket Money", 
+            "Parents", "Scholarship", "Part-Time Job", "Gift"
+        )
+        (base + customExpenseCategories + customIncomeCategories + listOf("Other")).distinct()
+    }
 
     Scaffold(
         topBar = {
